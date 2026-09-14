@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
-import '../../core/settings.dart';
 import 'auth_controller.dart';
 import 'brand_header.dart';
 
@@ -42,37 +41,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  Future<void> _editServer() async {
-    final controller = TextEditingController(text: ref.read(apiBaseUrlProvider));
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Servidor de la API'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('IP del computador que corre el backend. El celular debe estar en la misma red WiFi.'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.url,
-              autocorrect: false,
-              decoration: const InputDecoration(hintText: 'http://192.168.1.10:8000/api'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, ''), child: const Text('Restablecer')),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Guardar')),
-        ],
-      ),
-    );
-    if (result == null) return;
-    ref.read(apiBaseUrlProvider.notifier).set(result);
-    if (mounted) setState(() => _error = null);
   }
 
   void _fillDemo(String email) {
@@ -166,15 +134,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: _loading ? null : () => _fillDemo('repartidor@demo.co'),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton.icon(
-                      onPressed: _editServer,
-                      icon: const Icon(Icons.dns_outlined, size: 18),
-                      label: Text(
-                        'Servidor: ${ref.watch(apiBaseUrlProvider)}',
-                        overflow: TextOverflow.ellipsis,
-                      ),
                     ),
                   ],
                 ),

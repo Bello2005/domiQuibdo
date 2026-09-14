@@ -1,10 +1,11 @@
 import 'package:latlong2/latlong.dart';
 
 abstract final class AppConfig {
-  /// Chrome: default. APK en celular: `--dart-define=API_BASE_URL=http://IP-DE-LA-MAC:8000/api`
+  /// Backend en Render. Se puede sobreescribir con `--dart-define=API_BASE_URL=...`
+  /// (por ejemplo para apuntar a un backend local en desarrollo).
   static const apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8000/api',
+    defaultValue: 'https://domiquibdo.onrender.com/api',
   );
 
   static const osmTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
