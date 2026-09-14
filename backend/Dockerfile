@@ -17,4 +17,6 @@ ENV LOG_CHANNEL=stderr
 # Allow composer to run as root
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
+RUN composer install --no-dev --optimize-autoloader --no-interaction --working-dir=/var/www/html
+
 CMD ["/start.sh"]
