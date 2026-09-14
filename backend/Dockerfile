@@ -1,22 +1,21 @@
-FROM richarvey/nginx-php-fpm:3.1.6
-
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader
 COPY . .
+RUN composer dump-autoload --optimize --no-dev
 
-# Image config
-ENV SKIP_COMPOSER=1
-ENV WEBROOT=/var/www/html/public
-ENV PHP_ERRORS_STDERR=1
-ENV RUN_SCRIPTS=1
-ENV REAL_IP_HEADER=1
+FROM php:8.4-cli-alpine
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-php-extensions \
+    && install-php-extensions pdo_pgsql pgsql bcmath mbstring opcache
 
-# Laravel config
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV LOG_CHANNEL=stderr
 
-# Allow composer to run as root
-ENV COMPOSER_ALLOW_SUPERUSER=1
+WORKDIR /app
+COPY --from=vendor /app ./
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction --working-dir=/var/www/html
-
-CMD ["/start.sh"]
+EXPOSE 80
+CMD ["sh", "-c", "php artisan config:cache; php artisan route:cache; php artisan migrate --force; php artisan serve --host=0.0.0.0 --port=80"]
