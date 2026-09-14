@@ -81,6 +81,24 @@ El APK queda en `app/build/app/outputs/flutter-apk/app-release.apk`. Pásalo al 
 
 **Si la IP del Mac cambia** (otra red WiFi), no hace falta recompilar. En el login toca **"Servidor: …"** y escribe `http://NUEVA_IP:8000/api`. Si la red de la universidad bloquea la conexión entre dispositivos, comparte internet desde el celular y conecta el Mac a ese hotspot.
 
+## 3. Desplegar el backend (para que la app conecte siempre a la misma URL)
+
+En vez de depender de la IP local, el backend puede vivir en **Render** (gratis) con la base de datos en **Neon** (PostgreSQL gratis, sin expirar por inactividad). El repo ya trae `Dockerfile`, `render.yaml` y el script de deploy en `backend/`.
+
+1. **Crear la base de datos en [neon.tech](https://neon.tech)** (cuenta gratis, sin tarjeta): crear un proyecto, copiar el *connection string* (`postgresql://usuario:password@host/basededatos?sslmode=require`).
+2. **Generar la `APP_KEY`** localmente: `cd backend && php artisan key:generate --show` (copiar el valor `base64:...`).
+3. **Crear el servicio en [render.com](https://render.com)** (cuenta gratis): "New" → "Blueprint" → conectar este repo de GitHub. Render detecta `render.yaml` automáticamente.
+4. Al desplegar, Render pedirá los valores marcados `sync: false` en `render.yaml`: pegar ahí la `APP_KEY` del paso 2 y los datos de conexión de Neon (`DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` — se sacan del connection string del paso 1).
+5. Primer deploy: el build corre `composer install`, cachea config/rutas y ejecuta `php artisan migrate --force`. Para sembrar los datos demo una sola vez, abrir la "Shell" del servicio en Render y correr `php artisan db:seed`.
+6. Render entrega una URL fija, ej. `https://domiquibdo-backend.onrender.com`. Usarla en la app:
+   ```bash
+   flutter run -d chrome --dart-define=API_BASE_URL=https://domiquibdo-backend.onrender.com/api
+   flutter build apk --release --dart-define=API_BASE_URL=https://domiquibdo-backend.onrender.com/api
+   ```
+   También se puede pegar esa URL en el login, en **"Servidor: …"**, sin recompilar.
+
+**Nota:** el plan free de Render "duerme" el backend tras 15 min sin tráfico; la primera petición después de eso tarda ~1 min en responder. Es normal, solo hay que esperar el primer request antes de empezar la demo.
+
 ## Guion de demo sugerido
 1. **Login** con el chip "Cliente".
 2. **Catálogo**: skeletons de carga, filtro por categoría, transición Hero a un restaurante.
