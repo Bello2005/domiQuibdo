@@ -18,4 +18,4 @@ WORKDIR /app
 COPY --from=vendor /app ./
 
 EXPOSE 80
-CMD ["sh", "-c", "php artisan config:cache; php artisan route:cache; php artisan migrate --force; php artisan serve --host=0.0.0.0 --port=80"]
+CMD ["sh", "-c", "php artisan config:cache; php artisan route:cache; php artisan migrate --force; php artisan demo:seed-once; php artisan serve --host=0.0.0.0 --port=80"]
