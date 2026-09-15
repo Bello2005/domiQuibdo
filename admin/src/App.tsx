@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { Login } from './pages/Login'
 import { Orders } from './pages/Orders'
 import { Restaurants } from './pages/Restaurants'
+import { Users } from './pages/Users'
 import { Zones } from './pages/Zones'
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -46,6 +47,14 @@ function AppRoutes() {
         element={
           <Protected>
             <Zones />
+          </Protected>
+        }
+      />
+      <Route
+        path="/usuarios"
+        element={
+          <Protected>
+            <Users />
           </Protected>
         }
       />

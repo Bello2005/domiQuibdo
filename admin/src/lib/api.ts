@@ -82,6 +82,7 @@ export interface Restaurant {
   cover_image_url: string | null
   rating_avg: number | null
   delivery_time_min: number | null
+  is_active: boolean
   menu_items?: MenuItem[]
 }
 
@@ -91,6 +92,7 @@ export interface Zone {
   center_lat: number
   center_lng: number
   radius_m: number
+  is_active: boolean
 }
 
 export interface Order {
@@ -105,6 +107,23 @@ export interface Order {
   created_at: string | null
   restaurant?: Restaurant
   items_count?: number
+  repartidor_id: number | null
   repartidor?: { name: string; phone: string | null } | null
   customer?: { name: string; phone: string | null } | null
 }
+
+export const ORDER_STATUSES: { value: OrderStatus; label: string }[] = [
+  { value: 'pendiente', label: 'Pendiente' },
+  { value: 'confirmado', label: 'Confirmado' },
+  { value: 'preparando', label: 'Preparando' },
+  { value: 'en_camino', label: 'En camino' },
+  { value: 'entregado', label: 'Entregado' },
+  { value: 'cancelado', label: 'Cancelado' },
+]
+
+export const USER_ROLES: { value: AdminUser['role']; label: string }[] = [
+  { value: 'cliente', label: 'Cliente' },
+  { value: 'repartidor', label: 'Repartidor' },
+  { value: 'restaurante', label: 'Restaurante' },
+  { value: 'admin', label: 'Admin' },
+]

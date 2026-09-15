@@ -1,7 +1,7 @@
 import { AlertCircle, Clock3, DollarSign, Loader2, PackageCheck, ShoppingBag } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { StatusBadge } from '../components/StatusBadge'
-import { api, apiErrorMessage, type Order } from '../lib/api'
+import { api, apiErrorMessage, ORDER_STATUSES, type AdminUser, type Order, type OrderStatus } from '../lib/api'
 
 const currency = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
 
@@ -13,13 +13,51 @@ function formatDate(iso: string | null) {
 export function Orders() {
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [drivers, setDrivers] = useState<AdminUser[]>([])
+  const [updatingId, setUpdatingId] = useState<number | null>(null)
 
-  useEffect(() => {
+  function load() {
     api
       .get<Order[]>('/admin/orders')
       .then(({ data }) => setOrders(data))
       .catch((err) => setError(apiErrorMessage(err)))
+  }
+
+  useEffect(load, [])
+
+  useEffect(() => {
+    api
+      .get<AdminUser[]>('/admin/users')
+      .then(({ data }) => setDrivers(data.filter((u) => u.role === 'repartidor')))
+      .catch(() => {})
   }, [])
+
+  async function updateStatus(order: Order, status: OrderStatus) {
+    setUpdatingId(order.id)
+    try {
+      await api.put(`/admin/orders/${order.id}/status`, { status })
+      load()
+    } catch (err) {
+      alert(apiErrorMessage(err))
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  async function updateDriver(order: Order, repartidorId: string) {
+    setUpdatingId(order.id)
+    try {
+      await api.put(`/admin/orders/${order.id}/status`, {
+        status: order.status,
+        repartidor_id: repartidorId ? Number(repartidorId) : null,
+      })
+      load()
+    } catch (err) {
+      alert(apiErrorMessage(err))
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   const stats = useMemo(() => {
     if (!orders) return null
@@ -45,7 +83,7 @@ export function Orders() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         {error && (
           <div className="flex items-center gap-2 p-6 text-sm text-red-600">
             <AlertCircle size={18} />
@@ -65,7 +103,7 @@ export function Orders() {
         )}
 
         {orders && orders.length > 0 && (
-          <table className="w-full text-left text-sm">
+          <table className="w-full min-w-[900px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">#</th>
@@ -80,13 +118,41 @@ export function Orders() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50">
+                <tr key={order.id} className={`hover:bg-slate-50 ${updatingId === order.id ? 'opacity-50' : ''}`}>
                   <td className="px-4 py-3 font-medium text-slate-900">#{order.id}</td>
                   <td className="px-4 py-3">{order.customer?.name ?? '—'}</td>
                   <td className="px-4 py-3">{order.restaurant?.name ?? '—'}</td>
-                  <td className="px-4 py-3">{order.repartidor?.name ?? '—'}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={order.status} label={order.status_label} />
+                    <select
+                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
+                      value={order.repartidor_id ?? ''}
+                      disabled={updatingId === order.id}
+                      onChange={(e) => updateDriver(order, e.target.value)}
+                    >
+                      <option value="">Sin asignar</option>
+                      {drivers.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
+                      value={order.status}
+                      disabled={updatingId === order.id}
+                      onChange={(e) => updateStatus(order, e.target.value as OrderStatus)}
+                    >
+                      {ORDER_STATUSES.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="mt-1">
+                      <StatusBadge status={order.status} label={order.status_label} />
+                    </div>
                   </td>
                   <td className="px-4 py-3">{order.items_count ?? '—'}</td>
                   <td className="px-4 py-3 font-medium">{currency.format(order.total)}</td>
