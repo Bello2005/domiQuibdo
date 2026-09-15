@@ -16,6 +16,7 @@ class ZoneResource extends JsonResource
             'center_lat' => $this->center_lat,
             'center_lng' => $this->center_lng,
             'radius_m' => $this->radius_m,
+            'is_active' => $this->is_active,
         ];
     }
 }

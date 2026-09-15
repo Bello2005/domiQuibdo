@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AddressController;
-use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\Admin\MenuItemController as AdminMenuItemController;
+use App\Http\Controllers\Api\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Api\Admin\RestaurantController as AdminRestaurantController;
+use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Api\Admin\ZoneController as AdminZoneController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\DriverController;
@@ -40,5 +44,27 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('demo/orders/{order}/advance', [DemoController::class, 'advance']);
 
-    Route::get('admin/orders', [AdminController::class, 'orders']);
+    Route::prefix('admin')->middleware('admin')->group(function () {
+        Route::get('orders', [AdminOrderController::class, 'index']);
+        Route::put('orders/{order}/status', [AdminOrderController::class, 'updateStatus']);
+
+        Route::get('zones', [AdminZoneController::class, 'index']);
+        Route::post('zones', [AdminZoneController::class, 'store']);
+        Route::put('zones/{zone}', [AdminZoneController::class, 'update']);
+        Route::delete('zones/{zone}', [AdminZoneController::class, 'destroy']);
+
+        Route::get('restaurants', [AdminRestaurantController::class, 'index']);
+        Route::post('restaurants', [AdminRestaurantController::class, 'store']);
+        Route::put('restaurants/{restaurant}', [AdminRestaurantController::class, 'update']);
+        Route::delete('restaurants/{restaurant}', [AdminRestaurantController::class, 'destroy']);
+
+        Route::post('restaurants/{restaurant}/menu-items', [AdminMenuItemController::class, 'store']);
+        Route::put('menu-items/{menuItem}', [AdminMenuItemController::class, 'update']);
+        Route::delete('menu-items/{menuItem}', [AdminMenuItemController::class, 'destroy']);
+
+        Route::get('users', [AdminUserController::class, 'index']);
+        Route::post('users', [AdminUserController::class, 'store']);
+        Route::put('users/{user}', [AdminUserController::class, 'update']);
+        Route::delete('users/{user}', [AdminUserController::class, 'destroy']);
+    });
 });

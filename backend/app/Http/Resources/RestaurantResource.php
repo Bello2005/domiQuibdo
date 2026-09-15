@@ -22,6 +22,7 @@ class RestaurantResource extends JsonResource
             'cover_image_url' => $this->cover_image_url,
             'rating_avg' => $this->rating_avg,
             'delivery_time_min' => $this->delivery_time_min,
+            'is_active' => $this->is_active,
             'menu_items' => MenuItemResource::collection($this->whenLoaded('menuItems')),
         ];
     }
