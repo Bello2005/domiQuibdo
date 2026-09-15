@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\DriverController;
@@ -38,4 +39,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::post('demo/orders/{order}/advance', [DemoController::class, 'advance']);
+
+    Route::get('admin/orders', [AdminController::class, 'orders']);
 });
