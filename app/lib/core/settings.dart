@@ -40,25 +40,4 @@ class ThemeModeController extends Notifier<ThemeMode> {
 
 final themeModeProvider = NotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
 
-/// URL de la API editable desde la app: la IP del computador cambia según la red WiFi
-/// y así no hay que recompilar el APK. Vacío = valor compilado (AppConfig.apiBaseUrl).
-class ApiBaseUrlController extends Notifier<String> {
-  static const _key = 'api_base_url';
-
-  @override
-  String build() => ref.watch(sharedPreferencesProvider).getString(_key) ?? AppConfig.apiBaseUrl;
-
-  void set(String url) {
-    final prefs = ref.read(sharedPreferencesProvider);
-    final value = url.trim();
-    if (value.isEmpty) {
-      prefs.remove(_key);
-      state = AppConfig.apiBaseUrl;
-    } else {
-      prefs.setString(_key, value);
-      state = value;
-    }
-  }
-}
-
-final apiBaseUrlProvider = NotifierProvider<ApiBaseUrlController, String>(ApiBaseUrlController.new);
+final apiBaseUrlProvider = Provider<String>((ref) => AppConfig.apiBaseUrl);
