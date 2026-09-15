@@ -28,6 +28,7 @@ class OrderResource extends JsonResource
             'address' => AddressResource::make($this->whenLoaded('address')),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'items_count' => $this->whenCounted('items'),
+            'repartidor_id' => $this->repartidor_id,
             'repartidor' => $this->whenLoaded('repartidor', fn () => [
                 'name' => $this->repartidor->name,
                 'phone' => $this->repartidor->phone,
