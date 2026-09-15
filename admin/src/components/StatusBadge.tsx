@@ -1,6 +1,6 @@
 import type { OrderStatus } from '../lib/api'
 
-const styles: Record<OrderStatus, string> = {
+export const statusStyles: Record<OrderStatus, string> = {
   pendiente: 'bg-amber-100 text-amber-700',
   confirmado: 'bg-blue-100 text-blue-700',
   preparando: 'bg-violet-100 text-violet-700',
@@ -11,7 +11,7 @@ const styles: Record<OrderStatus, string> = {
 
 export function StatusBadge({ status, label }: { status: OrderStatus; label: string }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${styles[status]}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status]}`}>
       {label}
     </span>
   )

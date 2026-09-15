@@ -1,6 +1,6 @@
 import { AlertCircle, Clock3, DollarSign, Loader2, PackageCheck, ShoppingBag } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { StatusBadge } from '../components/StatusBadge'
+import { statusStyles } from '../components/StatusBadge'
 import { api, apiErrorMessage, ORDER_STATUSES, type AdminUser, type Order, type OrderStatus } from '../lib/api'
 
 const currency = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
@@ -139,7 +139,7 @@ export function Orders() {
                   </td>
                   <td className="px-4 py-3">
                     <select
-                      className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
+                      className={`rounded-full border-0 px-2.5 py-1 text-xs font-semibold outline-none focus:ring-2 focus:ring-teal-200 ${statusStyles[order.status]}`}
                       value={order.status}
                       disabled={updatingId === order.id}
                       onChange={(e) => updateStatus(order, e.target.value as OrderStatus)}
@@ -150,9 +150,6 @@ export function Orders() {
                         </option>
                       ))}
                     </select>
-                    <div className="mt-1">
-                      <StatusBadge status={order.status} label={order.status_label} />
-                    </div>
                   </td>
                   <td className="px-4 py-3">{order.items_count ?? '—'}</td>
                   <td className="px-4 py-3 font-medium">{currency.format(order.total)}</td>

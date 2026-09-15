@@ -37,7 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data } = await api.post('/auth/login', { email, password })
       if (data.user.role !== 'admin') {
-        throw new Error('Esta cuenta no tiene rol de administrador.')
+        throw new Error(
+          'Esta cuenta no es de administrador. Este panel es solo para el equipo de DomiQuibdó; clientes, repartidores y restaurantes usan la app móvil/web.',
+        )
       }
       setToken(data.token)
       setUser(data.user)
