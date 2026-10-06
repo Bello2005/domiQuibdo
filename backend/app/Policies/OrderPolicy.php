@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\OrderStatus;
 use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
@@ -35,5 +36,11 @@ class OrderPolicy
     {
         return $user->hasRole(UserRole::Restaurante)
             && $order->restaurant()->where('user_id', $user->id)->exists();
+    }
+
+    /** El cliente solo cancela mientras el restaurante no haya confirmado el pedido. */
+    public function cancel(User $user, Order $order): bool
+    {
+        return $user->id === $order->user_id && $order->status === OrderStatus::Pendiente;
     }
 }

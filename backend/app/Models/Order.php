@@ -65,4 +65,16 @@ class Order extends Model
     {
         return $this->hasMany(DeliveryMockRoutePoint::class)->orderBy('sequence');
     }
+
+    /** @return HasMany<CourierLocation, $this> */
+    public function courierLocations(): HasMany
+    {
+        return $this->hasMany(CourierLocation::class);
+    }
+
+    /** @return HasMany<Incident, $this> */
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(Incident::class);
+    }
 }

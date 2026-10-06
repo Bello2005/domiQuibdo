@@ -61,6 +61,11 @@ Antes de presentar, `php artisan migrate:fresh --seed` deja la base limpia. Qued
 | GET/PUT | `/restaurant/restaurants`, `/restaurant/restaurants/{id}` | Rol restaurante: ver su(s) negocio(s) y abrir/cerrar (`is_active`) |
 | POST/PUT/DELETE | `/restaurant/restaurants/{id}/menu-items`, `/restaurant/menu-items/{id}` | Rol restaurante: gestionar el menú propio |
 | GET · POST | `/restaurant/orders` · `/restaurant/orders/{id}/advance`, `/restaurant/orders/{id}/cancel` | Rol restaurante: pedidos de su negocio (pendiente → confirmado → preparando → en camino) y cancelación. No ve el código de entrega |
+| POST | `/orders/{id}/cancel` | Cliente: cancela su pedido solo mientras está `pendiente` |
+| GET | `/orders/{id}/location` | GPS real: última posición del repartidor, `live`, distancia al destino y `eta_min`. Solo visible mientras el pedido va `en_camino` |
+| POST | `/driver/orders/{id}/location` | Repartidor asignado reporta `latitude`, `longitude`, `heading`, `speed_mps`, `accuracy_m` (máx. 60/min) |
+| POST | `/orders/{id}/incidents` | SOS o reporte de problema (`type`: `sos` \| `problema`, `message`, `latitude`/`longitude`). Lo puede enviar cliente, repartidor o restaurante del pedido (máx. 6/min) |
+| GET/PUT | `/admin/incidents`, `/admin/incidents/{id}` | Admin: ver alertas (abiertas primero) y marcarlas `atendido` |
 | POST | `/demo/orders/{id}/advance` | Solo con `APP_DEMO=true`: avanza estados sin cambiar de cuenta |
 
 ## 2. App Flutter
@@ -131,7 +136,8 @@ En vez de depender de la IP local, el backend puede vivir en **Render** (gratis)
 - Mapas: © colaboradores de OpenStreetMap.
 
 ## Roadmap (entrega de noviembre)
-- **GPS real** con `geolocator` en background (foreground service, permisos de Android 14). `delivery_mock_route` se reemplaza por posiciones en vivo sin cambiar `orders`.
+- **GPS real en la app** con `geolocator` en background (foreground service, permisos de Android 14). El backend ya recibe y sirve las posiciones (`/driver/orders/{id}/location`, `/orders/{id}/location`); falta que la app del repartidor las envíe y que el tracking del cliente las use en lugar de `delivery_mock_route` (que queda como respaldo mientras no haya posiciones reales).
+- **SOS conectado**: la app aún simula el reporte; debe llamar a `POST /orders/{id}/incidents`.
 - **Laravel Reverb** (WebSockets) para tracking y estados en vivo; hoy la app hace polling cada 4-8 s.
 - **PostGIS**: polígonos reales de barrios (`ST_Contains`) y búsqueda de "restaurantes a menos de X km".
 - Pasarela de pagos, panel administrativo, app separada para repartidores y verificación de identidad.

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Resources\OrderResource;
@@ -31,6 +32,15 @@ class OrderController extends Controller
     public function show(Order $order): OrderResource
     {
         Gate::authorize('view', $order);
+
+        return OrderResource::make($order->load(Order::DETAIL_RELATIONS));
+    }
+
+    public function cancel(Order $order): OrderResource
+    {
+        Gate::authorize('cancel', $order);
+
+        $order->update(['status' => OrderStatus::Cancelado]);
 
         return OrderResource::make($order->load(Order::DETAIL_RELATIONS));
     }

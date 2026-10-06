@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Console\Command;
 
@@ -15,6 +16,7 @@ class SeedDemoOnce extends Command
     {
         if (User::where('email', 'cliente@demo.co')->exists()) {
             $this->info('Los datos demo ya existen, no se vuelve a sembrar.');
+            $this->linkDemoRestaurantOwner();
 
             return self::SUCCESS;
         }
@@ -22,5 +24,14 @@ class SeedDemoOnce extends Command
         $this->call('db:seed', ['--force' => true]);
 
         return self::SUCCESS;
+    }
+
+    /** Bases sembradas antes del rol restaurante: asigna la cuenta demo a su negocio si aún no tiene dueño. */
+    private function linkDemoRestaurantOwner(): void
+    {
+        $owner = User::where('email', 'restaurante@demo.co')->value('id');
+        if ($owner) {
+            Restaurant::where('name', 'Pollos Nacho')->whereNull('user_id')->update(['user_id' => $owner]);
+        }
     }
 }
