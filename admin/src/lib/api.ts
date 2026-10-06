@@ -127,3 +127,20 @@ export const USER_ROLES: { value: AdminUser['role']; label: string }[] = [
   { value: 'restaurante', label: 'Restaurante' },
   { value: 'admin', label: 'Admin' },
 ]
+
+export type IncidentType = 'sos' | 'problema'
+export type IncidentStatus = 'abierto' | 'atendido'
+
+export interface Incident {
+  id: number
+  order_id: number
+  type: IncidentType
+  status: IncidentStatus
+  message: string | null
+  latitude: number | null
+  longitude: number | null
+  created_at: string | null
+  resolved_at: string | null
+  reporter?: { name: string; phone: string | null; role: AdminUser['role'] }
+  order?: { id: number; status: OrderStatus; restaurant: string | null }
+}

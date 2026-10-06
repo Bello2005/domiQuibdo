@@ -1,10 +1,11 @@
-import { LayoutDashboard, LogOut, MapPin, Truck, Users as UsersIcon, UtensilsCrossed } from 'lucide-react'
+import { LayoutDashboard, LogOut, MapPin, ShieldAlert, Truck, Users as UsersIcon, UtensilsCrossed } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const navItems = [
   { to: '/pedidos', label: 'Pedidos', icon: LayoutDashboard },
+  { to: '/alertas', label: 'Alertas', icon: ShieldAlert },
   { to: '/restaurantes', label: 'Restaurantes', icon: UtensilsCrossed },
   { to: '/zonas', label: 'Zonas de cobertura', icon: MapPin },
   { to: '/usuarios', label: 'Usuarios', icon: UsersIcon },

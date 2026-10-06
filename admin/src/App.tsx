@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { Incidents } from './pages/Incidents'
 import { Login } from './pages/Login'
 import { Orders } from './pages/Orders'
 import { Restaurants } from './pages/Restaurants'
@@ -31,6 +32,14 @@ function AppRoutes() {
         element={
           <Protected>
             <Orders />
+          </Protected>
+        }
+      />
+      <Route
+        path="/alertas"
+        element={
+          <Protected>
+            <Incidents />
           </Protected>
         }
       />
