@@ -107,6 +107,12 @@ En vez de depender de la IP local, el backend puede vivir en **Render** (gratis)
 
 **Nota:** el plan free de Render "duerme" el backend tras 15 min sin tráfico; la primera petición después de eso tarda ~1 min en responder. Es normal, solo hay que esperar el primer request antes de empezar la demo.
 
+## Roles en la app
+- **Cliente**: catálogo, carrito, pedidos con tracking, cancelar mientras está pendiente, SOS.
+- **Repartidor**: entregas, validación del código, GPS en vivo, SOS.
+- **Restaurante** (`restaurante@demo.co`): pedidos de su negocio (confirmar → preparar → entregar al repartidor, o cancelar), abrir/cerrar el negocio y administrar el menú (agregar, editar, marcar agotado, eliminar).
+- **Admin**: panel web en `admin/` con pedidos, restaurantes, zonas, usuarios y **alertas** (SOS y reportes con ubicación, marcar como atendida).
+
 ## Guion de demo sugerido
 1. **Login** con el chip "Cliente".
 2. **Catálogo**: skeletons de carga, filtro por categoría, transición Hero a un restaurante.
@@ -137,8 +143,8 @@ En vez de depender de la IP local, el backend puede vivir en **Render** (gratis)
 - Mapas: © colaboradores de OpenStreetMap.
 
 ## Roadmap (entrega de noviembre)
-- **GPS en segundo plano**: hoy el repartidor comparte su ubicación cada 5 s con la app abierta (`geolocator`, permiso pedido al ponerse el pedido "en camino"). Falta el foreground service de Android 14 para que siga enviando con la pantalla apagada. Si aún no hay posiciones reales, el tracking del cliente usa la ruta simulada (`delivery_mock_route`) como respaldo.
+- **GPS en segundo plano**: el repartidor comparte su ubicación cada ~4 s con un servicio de primer plano de Android (notificación visible) y sigue enviando con la pantalla apagada. Falta probarlo en un celular con Android 14 real y pedir el permiso de notificaciones en tiempo de ejecución si el sistema lo exige. Si aún no hay posiciones reales, el tracking del cliente usa la ruta simulada (`delivery_mock_route`) como respaldo.
 - **Llamada real al 123**: el SOS ya guarda la alerta y la ubicación en el backend (la ve soporte en `/admin/incidents`), pero la llamada sigue simulada.
 - **Laravel Reverb** (WebSockets) para tracking y estados en vivo; hoy la app hace polling cada 4-8 s.
 - **PostGIS**: polígonos reales de barrios (`ST_Contains`) y búsqueda de "restaurantes a menos de X km".
-- Pasarela de pagos, panel administrativo, app separada para repartidores y verificación de identidad.
+- Pasarela de pagos, app separada para repartidores y verificación de identidad.

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart' show Position;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -88,7 +89,8 @@ class DriverOrderScreen extends ConsumerWidget {
 }
 
 /// Envía el GPS real al backend cada pocos segundos mientras el pedido va en camino,
-/// para que el cliente vea el avance y un ETA real. Funciona con la app abierta.
+/// para que el cliente vea el avance y un ETA real. En Android sigue enviando con la pantalla apagada
+/// (servicio de primer plano con notificación) y se detiene al salir de la pantalla o al entregar.
 class _LocationSharing extends ConsumerStatefulWidget {
   const _LocationSharing({required this.orderId});
 
@@ -99,9 +101,10 @@ class _LocationSharing extends ConsumerStatefulWidget {
 }
 
 class _LocationSharingState extends ConsumerState<_LocationSharing> {
-  static const _interval = Duration(seconds: 5);
+  /// Mínimo entre envíos al servidor (el GPS puede reportar más seguido).
+  static const _minInterval = Duration(seconds: 4);
 
-  Timer? _timer;
+  StreamSubscription<Position>? _subscription;
   LocationAccess? _access;
   bool _sending = false;
   bool _lastSendFailed = false;
@@ -115,7 +118,7 @@ class _LocationSharingState extends ConsumerState<_LocationSharing> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 
@@ -125,17 +128,20 @@ class _LocationSharingState extends ConsumerState<_LocationSharing> {
     setState(() => _access = access);
     if (access != LocationAccess.granted) return;
 
-    await _send();
-    _timer?.cancel();
-    _timer = Timer.periodic(_interval, (_) => _send());
+    _subscription?.cancel();
+    _subscription = LocationService.positions().listen(
+      _send,
+      onError: (_) {
+        if (mounted) setState(() => _lastSendFailed = true);
+      },
+    );
   }
 
-  Future<void> _send() async {
-    if (_sending || !mounted) return;
+  Future<void> _send(Position position) async {
+    final last = _lastSent;
+    if (_sending || !mounted || (last != null && DateTime.now().difference(last) < _minInterval)) return;
     _sending = true;
     try {
-      final position = await LocationService.current();
-      if (position == null) return;
       await ref.read(orderRepositoryProvider).sendCourierPosition(widget.orderId, position);
       if (mounted) {
         setState(() {

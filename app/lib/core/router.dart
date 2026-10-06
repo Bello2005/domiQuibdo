@@ -18,6 +18,8 @@ import '../features/orders/order_detail_screen.dart';
 import '../features/orders/orders_screen.dart';
 import '../features/orders/tracking_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/restaurant/restaurant_menu_screen.dart';
+import '../features/restaurant/restaurant_orders_screen.dart';
 import 'models.dart';
 import 'shells.dart';
 
@@ -103,6 +105,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const AddressPickerScreen(),
       ),
 
+      // App del restaurante: Pedidos · Mi negocio · Perfil
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => RestaurantShell(shell: shell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/restaurant', builder: (_, _) => const RestaurantOrdersScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/restaurant-menu', builder: (_, _) => const RestaurantMenuScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/restaurant-profile', builder: (_, _) => const ProfileScreen()),
+          ]),
+        ],
+      ),
+
       // App del repartidor: Entregas · Perfil
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => DriverShell(shell: shell),
@@ -129,6 +147,19 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
+String _homeFor(AppUser user) => switch (user.role) {
+      UserRole.repartidor => '/driver',
+      UserRole.restaurante => '/restaurant',
+      _ => '/home',
+    };
+
+/// Sección de la app a la que pertenece una ruta: cliente, repartidor o restaurante.
+String _areaOf(String location) {
+  if (location.startsWith('/driver')) return 'driver';
+  if (location.startsWith('/restaurant')) return 'restaurant';
+  return 'client';
+}
+
 String? _redirect(AsyncValue<AppUser?> auth, String location) {
   final isPublic = location == '/login' || location == '/register';
 
@@ -137,12 +168,11 @@ String? _redirect(AsyncValue<AppUser?> auth, String location) {
   final user = auth.valueOrNull;
   if (user == null) return isPublic ? null : '/login';
 
-  final home = user.isDriver ? '/driver' : '/home';
+  final home = _homeFor(user);
   if (isPublic || location == '/splash') return home;
 
   // Cada rol solo navega por su propia sección.
-  final inDriverArea = location.startsWith('/driver');
-  if (user.isDriver != inDriverArea) return home;
+  if (_areaOf(location) != _areaOf(home)) return home;
 
   return null;
 }

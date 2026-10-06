@@ -34,6 +34,7 @@ class AppUser {
   final UserRole role;
 
   bool get isDriver => role == UserRole.repartidor;
+  bool get isRestaurant => role == UserRole.restaurante;
   String get firstName => name.split(' ').first;
   String get initials => name.split(' ').where((p) => p.isNotEmpty).take(2).map((p) => p[0].toUpperCase()).join();
 }
@@ -107,7 +108,14 @@ class Address {
 
 /// Plato del menú (se evita el nombre `MenuItem`, que ya existe en Flutter).
 class Dish {
-  const Dish({required this.id, required this.restaurantId, required this.name, required this.price, this.description});
+  const Dish({
+    required this.id,
+    required this.restaurantId,
+    required this.name,
+    required this.price,
+    this.description,
+    this.isAvailable = true,
+  });
 
   factory Dish.fromJson(Map<String, dynamic> json) => Dish(
         id: json['id'] as int,
@@ -115,6 +123,7 @@ class Dish {
         name: json['name'] as String,
         description: json['description'] as String?,
         price: _toDouble(json['price']),
+        isAvailable: json['is_available'] as bool? ?? true,
       );
 
   final int id;
@@ -122,6 +131,7 @@ class Dish {
   final String name;
   final String? description;
   final double price;
+  final bool isAvailable;
 }
 
 class Restaurant {
@@ -135,6 +145,7 @@ class Restaurant {
     required this.deliveryTimeMin,
     this.description,
     this.phone,
+    this.isActive = true,
     this.menu = const [],
   });
 
@@ -148,6 +159,7 @@ class Restaurant {
         phone: json['phone'] as String?,
         rating: _toDouble(json['rating_avg']),
         deliveryTimeMin: json['delivery_time_min'] as int,
+        isActive: json['is_active'] as bool? ?? true,
         menu: [
           for (final item in (json['menu_items'] as List<dynamic>? ?? const []))
             Dish.fromJson(item as Map<String, dynamic>),
@@ -163,6 +175,7 @@ class Restaurant {
   final String? phone;
   final double rating;
   final int deliveryTimeMin;
+  final bool isActive;
   final List<Dish> menu;
 
   String get etaLabel => '$deliveryTimeMin-${deliveryTimeMin + 10} min';

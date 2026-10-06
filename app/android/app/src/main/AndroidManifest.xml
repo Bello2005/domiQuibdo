@@ -3,6 +3,10 @@
     <!-- GPS del repartidor mientras entrega (se pide solo cuando hay un pedido en camino) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Android 14: el envío de GPS con la pantalla apagada corre como servicio de primer plano de tipo ubicación -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="DomiQuibdó"
         android:name="${applicationName}"

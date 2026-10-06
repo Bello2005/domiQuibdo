@@ -64,7 +64,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            if (!user.isDriver) ...[
+            if (!user.isDriver && !user.isRestaurant) ...[
               const SizedBox(height: 12),
               Card(
                 child: ListTile(

@@ -53,6 +53,38 @@ class ClientShell extends ConsumerWidget {
   }
 }
 
+class RestaurantShell extends StatelessWidget {
+  const RestaurantShell({super.key, required this.shell});
+
+  final StatefulNavigationShell shell;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: shell,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: shell.currentIndex,
+          onDestinationSelected: (index) => shell.goBranch(index, initialLocation: index == shell.currentIndex),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              selectedIcon: Icon(Icons.receipt_long),
+              label: 'Pedidos',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.storefront_outlined),
+              selectedIcon: Icon(Icons.storefront),
+              label: 'Mi negocio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'Perfil',
+            ),
+          ],
+        ),
+      );
+}
+
 class DriverShell extends StatelessWidget {
   const DriverShell({super.key, required this.shell});
 

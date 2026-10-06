@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -16,6 +17,24 @@ abstract final class LocationService {
       LocationPermission.deniedForever => LocationAccess.deniedForever,
       _ => LocationAccess.granted,
     };
+  }
+
+  /// Posiciones en vivo. En Android corre como servicio de primer plano (con notificación visible)
+  /// para que el envío continúe aunque el repartidor apague la pantalla o abra otra app.
+  static Stream<Position> positions() {
+    final LocationSettings settings = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+        ? AndroidSettings(
+            accuracy: LocationAccuracy.high,
+            intervalDuration: const Duration(seconds: 4),
+            foregroundNotificationConfig: const ForegroundNotificationConfig(
+              notificationTitle: 'DomiQuibdó · entrega en curso',
+              notificationText: 'Compartiendo tu ubicación con el cliente',
+              enableWakeLock: true,
+              setOngoing: true,
+            ),
+          )
+        : const LocationSettings(accuracy: LocationAccuracy.high);
+    return Geolocator.getPositionStream(locationSettings: settings);
   }
 
   static Future<Position?> current() async {
