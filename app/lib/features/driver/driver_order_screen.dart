@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
 import '../../core/config.dart';
 import '../../core/format.dart';
+import '../../core/location_service.dart';
 import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
@@ -39,6 +42,7 @@ class DriverOrderScreen extends ConsumerWidget {
                 ),
                 onPressed: () => showSosSheet(
                   context,
+                  orderId: id,
                   shareMessage: 'Soy repartidor de DomiQuibdó y estoy entregando el pedido #$id. '
                       'Punto de entrega: ${googleMapsLink(order!.address!.position)}',
                 ),
@@ -66,6 +70,10 @@ class DriverOrderScreen extends ConsumerWidget {
                   ContactCard(title: 'Cliente', contact: order.customer!, icon: Icons.person_outline),
                 ],
                 const SizedBox(height: 12),
+                if (order.status == OrderStatus.enCamino) ...[
+                  _LocationSharing(orderId: order.id),
+                  const SizedBox(height: 12),
+                ],
                 _DriverActions(order: order),
                 const SizedBox(height: 12),
                 const SectionTitle('Pedido'),
@@ -75,6 +83,96 @@ class DriverOrderScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Envía el GPS real al backend cada pocos segundos mientras el pedido va en camino,
+/// para que el cliente vea el avance y un ETA real. Funciona con la app abierta.
+class _LocationSharing extends ConsumerStatefulWidget {
+  const _LocationSharing({required this.orderId});
+
+  final int orderId;
+
+  @override
+  ConsumerState<_LocationSharing> createState() => _LocationSharingState();
+}
+
+class _LocationSharingState extends ConsumerState<_LocationSharing> {
+  static const _interval = Duration(seconds: 5);
+
+  Timer? _timer;
+  LocationAccess? _access;
+  bool _sending = false;
+  bool _lastSendFailed = false;
+  DateTime? _lastSent;
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _start() async {
+    final access = await LocationService.ensureAccess();
+    if (!mounted) return;
+    setState(() => _access = access);
+    if (access != LocationAccess.granted) return;
+
+    await _send();
+    _timer?.cancel();
+    _timer = Timer.periodic(_interval, (_) => _send());
+  }
+
+  Future<void> _send() async {
+    if (_sending || !mounted) return;
+    _sending = true;
+    try {
+      final position = await LocationService.current();
+      if (position == null) return;
+      await ref.read(orderRepositoryProvider).sendCourierPosition(widget.orderId, position);
+      if (mounted) {
+        setState(() {
+          _lastSent = DateTime.now();
+          _lastSendFailed = false;
+        });
+      }
+    } on ApiException {
+      if (mounted) setState(() => _lastSendFailed = true);
+    } finally {
+      _sending = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    final (icon, text, ok) = switch (_access) {
+      null => (Icons.gps_not_fixed, 'Activando tu ubicación…', true),
+      LocationAccess.serviceOff => (Icons.location_off, 'Activa el GPS del celular para que el cliente pueda seguirte.', false),
+      LocationAccess.denied => (Icons.location_disabled, 'Necesitamos permiso de ubicación para compartir tu avance con el cliente.', false),
+      LocationAccess.deniedForever => (
+          Icons.location_disabled,
+          'El permiso de ubicación está bloqueado. Actívalo en los ajustes del celular.',
+          false,
+        ),
+      LocationAccess.granted when _lastSendFailed => (Icons.sync_problem, 'Sin conexión: reintentando enviar tu ubicación…', false),
+      LocationAccess.granted when _lastSent == null => (Icons.gps_not_fixed, 'Buscando señal GPS…', true),
+      LocationAccess.granted => (Icons.gps_fixed, 'Compartiendo tu ubicación en vivo con el cliente.', true),
+    };
+
+    return InfoBanner(
+      icon: icon,
+      text: text,
+      background: ok ? scheme.primaryContainer : scheme.errorContainer,
+      foreground: ok ? scheme.onPrimaryContainer : scheme.onErrorContainer,
     );
   }
 }

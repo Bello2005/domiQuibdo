@@ -48,6 +48,10 @@ class OrderDetailScreen extends ConsumerWidget {
                     delivered: order.status == OrderStatus.entregado,
                   ),
                 ],
+                if (order.status == OrderStatus.pendiente) ...[
+                  const SizedBox(height: 12),
+                  _CancelButton(orderId: order.id),
+                ],
                 if (demoMode && order.status.isActive) ...[
                   const SizedBox(height: 12),
                   _DemoPanel(order: order),
@@ -75,6 +79,54 @@ class OrderDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// El cliente puede cancelar mientras el restaurante no haya confirmado el pedido.
+class _CancelButton extends ConsumerStatefulWidget {
+  const _CancelButton({required this.orderId});
+
+  final int orderId;
+
+  @override
+  ConsumerState<_CancelButton> createState() => _CancelButtonState();
+}
+
+class _CancelButtonState extends ConsumerState<_CancelButton> {
+  bool _busy = false;
+
+  Future<void> _cancel() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Cancelar el pedido?'),
+        content: const Text('Aún no lo ha confirmado el restaurante, así que no tiene costo.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Volver')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sí, cancelar')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      await ref.read(orderRepositoryProvider).cancel(widget.orderId);
+      ref
+        ..invalidate(orderDetailProvider(widget.orderId))
+        ..invalidate(ordersProvider);
+    } on ApiException catch (e) {
+      if (mounted) showMessage(context, e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+        onPressed: _busy ? null : _cancel,
+        icon: const Icon(Icons.cancel_outlined),
+        label: const Text('Cancelar pedido'),
+      );
 }
 
 /// Controles solo para la presentación (se ocultan desactivando "Modo demo" en Perfil).

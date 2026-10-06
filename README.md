@@ -117,6 +117,7 @@ En vez de depender de la IP local, el backend puede vivir en **Render** (gratis)
    - un código incorrecto se rechaza
    - con el correcto el pedido pasa a *entregado*
    - el cliente ve la confirmación automáticamente
+   - mientras el pedido va *en camino*, la app del repartidor comparte su GPS y el cliente ve su avance real y un ETA calculado por el servidor (con permiso de ubicación)
 7. **Perfil → Apariencia → Oscuro** para mostrar el dark mode.
 
 ## Decisiones de seguridad (Sprint 0)
@@ -136,8 +137,8 @@ En vez de depender de la IP local, el backend puede vivir en **Render** (gratis)
 - Mapas: © colaboradores de OpenStreetMap.
 
 ## Roadmap (entrega de noviembre)
-- **GPS real en la app** con `geolocator` en background (foreground service, permisos de Android 14). El backend ya recibe y sirve las posiciones (`/driver/orders/{id}/location`, `/orders/{id}/location`); falta que la app del repartidor las envíe y que el tracking del cliente las use en lugar de `delivery_mock_route` (que queda como respaldo mientras no haya posiciones reales).
-- **SOS conectado**: la app aún simula el reporte; debe llamar a `POST /orders/{id}/incidents`.
+- **GPS en segundo plano**: hoy el repartidor comparte su ubicación cada 5 s con la app abierta (`geolocator`, permiso pedido al ponerse el pedido "en camino"). Falta el foreground service de Android 14 para que siga enviando con la pantalla apagada. Si aún no hay posiciones reales, el tracking del cliente usa la ruta simulada (`delivery_mock_route`) como respaldo.
+- **Llamada real al 123**: el SOS ya guarda la alerta y la ubicación en el backend (la ve soporte en `/admin/incidents`), pero la llamada sigue simulada.
 - **Laravel Reverb** (WebSockets) para tracking y estados en vivo; hoy la app hace polling cada 4-8 s.
 - **PostGIS**: polígonos reales de barrios (`ST_Contains`) y búsqueda de "restaurantes a menos de X km".
 - Pasarela de pagos, panel administrativo, app separada para repartidores y verificación de identidad.

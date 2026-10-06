@@ -219,6 +219,33 @@ class OrderItem {
   final double subtotal;
 }
 
+/// Posición real del repartidor devuelta por `GET /orders/{id}/location`.
+class CourierPosition {
+  const CourierPosition({required this.live, this.position, this.etaMin, this.distanceM, this.heading});
+
+  factory CourierPosition.fromJson(Map<String, dynamic> json) => CourierPosition(
+        live: json['live'] as bool? ?? false,
+        position: json['latitude'] == null ? null : _latLng(json),
+        etaMin: json['eta_min'] as int?,
+        distanceM: json['distance_m'] as int?,
+        heading: (json['heading'] as num?)?.toDouble(),
+      );
+
+  /// Hay una posición reciente (sin señal ≥ 90 s se considera no viva).
+  final bool live;
+  final LatLng? position;
+  final int? etaMin;
+  final int? distanceM;
+  final double? heading;
+
+  bool get hasFix => position != null;
+
+  /// A esta distancia del destino se considera que el repartidor llegó.
+  static const arrivedMeters = 60;
+
+  bool get hasArrived => (distanceM ?? 1 << 30) <= arrivedMeters;
+}
+
 class Contact {
   const Contact({required this.name, this.phone});
 

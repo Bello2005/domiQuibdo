@@ -1,25 +1,45 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/api_client.dart';
+import '../../core/location_service.dart';
 import '../../core/theme.dart';
+import '../orders/order_repository.dart';
+import 'incident_type.dart';
 import 'share_location.dart';
 
-/// Botón SOS. Sprint 0: la llamada es simulada, no se marca ningún número real.
-Future<void> showSosSheet(BuildContext context, {required String shareMessage}) => showModalBottomSheet<void>(
+/// Botón SOS. La alerta y los reportes se guardan en el backend (soporte los ve en el panel);
+/// la llamada al 123 sigue siendo simulada: no se marca ningún número real.
+Future<void> showSosSheet(BuildContext context, {required int orderId, required String shareMessage}) =>
+    showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (_) => _SosSheet(shareMessage: shareMessage),
+      builder: (_) => _SosSheet(orderId: orderId, shareMessage: shareMessage),
     );
 
-class _SosSheet extends StatelessWidget {
-  const _SosSheet({required this.shareMessage});
+class _SosSheet extends ConsumerWidget {
+  const _SosSheet({required this.orderId, required this.shareMessage});
 
+  final int orderId;
   final String shareMessage;
 
+  /// Registra el incidente con la ubicación actual (si el permiso ya fue concedido).
+  /// Devuelve false si no se pudo guardar, para avisarle a la persona.
+  Future<bool> _report(WidgetRef ref, IncidentType type) async {
+    final position = await LocationService.currentIfAllowed();
+    try {
+      await ref.read(orderRepositoryProvider).reportIncident(orderId, type, position: position);
+      return true;
+    } on ApiException {
+      return false;
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
@@ -57,7 +77,11 @@ class _SosSheet extends StatelessWidget {
               title: 'Llamar a emergencias · 123',
               subtitle: 'Policía Nacional (llamada simulada en esta demo)',
               onTap: () async {
-                await showDialog<void>(context: context, builder: (_) => const _SimulatedCallDialog());
+                final registered = _report(ref, IncidentType.sos);
+                await showDialog<void>(
+                  context: context,
+                  builder: (_) => _SimulatedCallDialog(registered: registered),
+                );
                 if (context.mounted) Navigator.pop(context);
               },
             ),
@@ -73,17 +97,20 @@ class _SosSheet extends StatelessWidget {
               color: scheme.secondary,
               title: 'Reportar un problema con el pedido',
               subtitle: 'Soporte revisará tu caso',
-              onTap: () {
+              onTap: () async {
                 final messenger = ScaffoldMessenger.of(context);
                 Navigator.pop(context);
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Reporte enviado (simulado). Soporte te contactará.')),
-                );
+                final sent = await _report(ref, IncidentType.problema);
+                messenger.showSnackBar(SnackBar(
+                  content: Text(sent
+                      ? 'Reporte enviado. Soporte revisará tu caso.'
+                      : 'No pudimos enviar el reporte. Revisa tu conexión e intenta de nuevo.'),
+                ));
               },
             ),
             const SizedBox(height: 8),
             Text(
-              'Demo académica: ninguna opción contacta servicios reales.',
+              'La llamada al 123 es simulada en esta demo; tu alerta y tus reportes sí quedan registrados para soporte.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
@@ -130,7 +157,10 @@ class _SosAction extends StatelessWidget {
 }
 
 class _SimulatedCallDialog extends StatefulWidget {
-  const _SimulatedCallDialog();
+  const _SimulatedCallDialog({required this.registered});
+
+  /// Resultado de guardar la alerta SOS en el backend (se resuelve mientras corre la cuenta regresiva).
+  final Future<bool> registered;
 
   @override
   State<_SimulatedCallDialog> createState() => _SimulatedCallDialogState();
@@ -173,10 +203,18 @@ class _SimulatedCallDialogState extends State<_SimulatedCallDialog> {
                 const Text('Puedes cancelar si fue un error.'),
               ],
             )
-          : Text(
-              'En la versión final, la app marcará la Línea 123 y enviará tu ubicación y los datos '
-              'del pedido a tus contactos de confianza.',
-              style: theme.textTheme.bodyMedium,
+          : FutureBuilder<bool>(
+              future: widget.registered,
+              builder: (context, snapshot) => Text(
+                switch (snapshot.data) {
+                  true => 'Tu alerta SOS quedó registrada con tu ubicación y soporte ya puede verla. '
+                      'En la versión final, la app también marcará la Línea 123.',
+                  false => 'No pudimos registrar la alerta por falta de conexión. '
+                      'Si estás en peligro, llama directamente al 123.',
+                  null => 'Registrando tu alerta…',
+                },
+                style: theme.textTheme.bodyMedium,
+              ),
             ),
       actions: [
         if (calling)

@@ -12,8 +12,9 @@ import '../safety/share_location.dart';
 import '../safety/sos_sheet.dart';
 import 'order_repository.dart';
 
-/// Tracking con GPS simulado: el marcador recorre `delivery_mock_route`
-/// avanzando un punto cada [AppConfig.mockStepDuration].
+/// Tracking del pedido. Con GPS real (el repartidor reporta su posición) el marcador sigue esa
+/// posición y el ETA lo calcula el servidor. Mientras no haya ninguna posición real, se usa el
+/// respaldo simulado: el marcador recorre `delivery_mock_route` un punto cada [AppConfig.mockStepDuration].
 class TrackingScreen extends ConsumerStatefulWidget {
   const TrackingScreen({super.key, required this.orderId});
 
@@ -71,6 +72,8 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
   Widget build(BuildContext context) {
     final orderAsync = ref.watch(orderDetailProvider(widget.orderId));
     final routeAsync = ref.watch(orderRouteProvider(widget.orderId));
+    final courier = ref.watch(courierPositionProvider(widget.orderId)).valueOrNull;
+    final livePosition = courier?.position;
 
     ref.listen(orderDetailProvider(widget.orderId), (_, next) {
       final order = next.valueOrNull;
@@ -98,11 +101,16 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
     final scheme = Theme.of(context).colorScheme;
     final restaurant = order.restaurant!;
     final destination = order.address!;
+    // Posición del repartidor: real si el servidor tiene alguna; si no, la simulada.
+    LatLng courierAt() => livePosition ?? _positionAt(route, progress.value);
 
     return Scaffold(
       body: PeriodicRefresh(
         interval: const Duration(seconds: 4),
-        onTick: (ref) => ref.invalidate(orderDetailProvider(widget.orderId)),
+        onTick: (ref) {
+          ref.invalidate(orderDetailProvider(widget.orderId));
+          ref.invalidate(courierPositionProvider(widget.orderId));
+        },
         child: Stack(
           children: [
             FlutterMap(
@@ -120,22 +128,23 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                     Polyline(points: route, strokeWidth: 6, color: scheme.primary.withValues(alpha: 0.3)),
                   ],
                 ),
-                AnimatedBuilder(
-                  animation: progress,
-                  builder: (context, _) {
-                    final t = progress.value;
-                    final passed = (t * (route.length - 1)).floor() + 1;
-                    return PolylineLayer(
-                      polylines: [
-                        Polyline(
-                          points: [...route.take(passed), _positionAt(route, t)],
-                          strokeWidth: 6,
-                          color: scheme.primary,
-                        ),
-                      ],
-                    );
-                  },
-                ),
+                if (livePosition == null)
+                  AnimatedBuilder(
+                    animation: progress,
+                    builder: (context, _) {
+                      final t = progress.value;
+                      final passed = (t * (route.length - 1)).floor() + 1;
+                      return PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: [...route.take(passed), _positionAt(route, t)],
+                            strokeWidth: 6,
+                            color: scheme.primary,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 MarkerLayer(
                   markers: [
                     Marker(
@@ -157,7 +166,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                   builder: (context, _) => MarkerLayer(
                     markers: [
                       Marker(
-                        point: _positionAt(route, progress.value),
+                        point: courierAt(),
                         width: 56,
                         height: 56,
                         child: _CourierMarker(color: scheme.primary),
@@ -181,7 +190,11 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                     Expanded(
                       child: AnimatedBuilder(
                         animation: progress,
-                        builder: (context, _) => _EtaPill(progress: progress.value, steps: route.length - 1),
+                        builder: (context, _) => _EtaPill(
+                          progress: progress.value,
+                          steps: route.length - 1,
+                          courier: courier?.hasFix == true ? courier : null,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -193,7 +206,8 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                       ),
                       onPressed: () => showSosSheet(
                         context,
-                        shareMessage: trackingShareMessage(order: order, position: _positionAt(route, progress.value)),
+                        orderId: order.id,
+                        shareMessage: trackingShareMessage(order: order, position: courierAt()),
                       ),
                       icon: const Icon(Icons.sos),
                       label: const Text('SOS'),
@@ -211,8 +225,8 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                     padding: const EdgeInsets.all(12),
                     child: _TrackingPanel(
                       order: order,
-                      arrived: progress.isCompleted,
-                      currentPosition: () => _positionAt(route, progress.value),
+                      arrived: courier?.hasFix == true ? courier!.hasArrived : progress.isCompleted,
+                      currentPosition: courierAt,
                     ),
                   ),
                 ),
@@ -226,17 +240,22 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
 }
 
 class _EtaPill extends StatelessWidget {
-  const _EtaPill({required this.progress, required this.steps});
+  const _EtaPill({required this.progress, required this.steps, this.courier});
 
   final double progress;
   final int steps;
 
+  /// Posición real del repartidor; null mientras se usa la ruta simulada.
+  final CourierPosition? courier;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final arrived = progress >= 1;
-    // Sprint 0: ETA simulado (~2 min por tramo de la ruta).
-    final minutes = ((1 - progress) * steps * 2).ceil();
+    final real = courier;
+    final arrived = real == null ? progress >= 1 : real.hasArrived;
+    // Con GPS real el ETA viene del servidor; si no, simulado (~2 min por tramo de la ruta).
+    final minutes = real == null ? ((1 - progress) * steps * 2).ceil() : (real.etaMin ?? 1);
+    final noSignal = real != null && !real.live;
 
     return Material(
       elevation: 3,
@@ -250,7 +269,11 @@ class _EtaPill extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                arrived ? 'Tu repartidor llegó' : 'En camino · llega en ~$minutes min',
+                arrived
+                    ? 'Tu repartidor llegó'
+                    : noSignal
+                        ? 'Buscando señal del repartidor…'
+                        : 'En camino · llega en ~$minutes min',
                 style: theme.textTheme.titleSmall,
                 overflow: TextOverflow.ellipsis,
               ),
