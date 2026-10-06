@@ -1,0 +1,14 @@
+# SITE_ADDRESS puede ser ":80" (solo HTTP, por IP) o un dominio (Caddy saca el certificado HTTPS solo).
+{$SITE_ADDRESS::80} {
+	encode gzip
+
+	handle /apk/* {
+		uri strip_prefix /apk
+		root * /srv/apk
+		file_server
+	}
+
+	handle {
+		reverse_proxy app:80
+	}
+}

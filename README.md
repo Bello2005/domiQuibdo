@@ -113,6 +113,22 @@ En vez de depender de la IP local, el backend puede vivir en **Render** (gratis)
 - **Restaurante** (`restaurante@demo.co`): pedidos de su negocio (confirmar → preparar → entregar al repartidor, o cancelar), abrir/cerrar el negocio y administrar el menú (agregar, editar, marcar agotado, eliminar).
 - **Admin**: panel web en `admin/` con pedidos, restaurantes, zonas, usuarios y **alertas** (SOS y reportes con ubicación, marcar como atendida).
 
+## 4. Desplegar en tu propio servidor Ubuntu (Docker)
+
+Alternativa a Render: todo el backend (Caddy + Laravel + PostgreSQL) en un servidor tuyo. Todo vive en `deploy/`.
+
+```bash
+git clone https://github.com/Bello2005/domiQuibdo.git && cd domiQuibdo
+./deploy/install.sh                 # por IP, solo HTTP  ·  o:  ./deploy/install.sh api.midominio.com  (HTTPS automático)
+./deploy/build-apk.sh http://IP_DEL_SERVIDOR/api    # genera el APK apuntando a ese backend
+```
+
+- `install.sh` instala Docker si falta, crea `deploy/.env` con claves aleatorias, levanta los contenedores y espera a que `/up` responda. Se puede repetir sin perder datos.
+- `build-apk.sh` instala Java 17, Flutter y el Android SDK, crea (una sola vez) una llave de firma en `~/.domiquibdo-keys` y deja el APK en `deploy/public/apk/domiquibdo.apk`, descargable desde el celular en `http://IP_DEL_SERVIDOR/apk/domiquibdo.apk`. **Respalda esa carpeta**: sin la llave no se puede actualizar la app ya instalada.
+- Actualizar tras cambios: `./deploy/update.sh` (las migraciones corren solas).
+- Abre los puertos 80 y 443 del firewall (`sudo ufw allow 80,443/tcp`).
+- El panel admin (Vercel) apunta al backend con `VITE_API_BASE_URL`.
+
 ## Guion de demo sugerido
 1. **Login** con el chip "Cliente".
 2. **Catálogo**: skeletons de carga, filtro por categoría, transición Hero a un restaurante.

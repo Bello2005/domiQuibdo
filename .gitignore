@@ -3,3 +3,6 @@
 .vscode/
 *.log
 .claude/
+
+/deploy/.env
+/deploy/public/
