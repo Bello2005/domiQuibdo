@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\RestaurantController;
+use App\Http\Controllers\Api\Restaurant\MenuItemController as OwnerMenuItemController;
+use App\Http\Controllers\Api\Restaurant\OrderController as OwnerOrderController;
+use App\Http\Controllers\Api\Restaurant\RestaurantController as OwnerRestaurantController;
 use App\Http\Controllers\Api\ZoneController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +43,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('orders/{order}/advance', [DriverController::class, 'advance']);
         // Máx. 5 intentos por minuto: evita adivinar el código de 4 dígitos por fuerza bruta.
         Route::post('orders/{order}/deliver', [DriverController::class, 'deliver'])->middleware('throttle:5,1');
+    });
+
+    Route::prefix('restaurant')->middleware('restaurante')->group(function () {
+        Route::get('restaurants', [OwnerRestaurantController::class, 'index']);
+        Route::put('restaurants/{restaurant}', [OwnerRestaurantController::class, 'update']);
+
+        Route::post('restaurants/{restaurant}/menu-items', [OwnerMenuItemController::class, 'store']);
+        Route::put('menu-items/{menuItem}', [OwnerMenuItemController::class, 'update']);
+        Route::delete('menu-items/{menuItem}', [OwnerMenuItemController::class, 'destroy']);
+
+        Route::get('orders', [OwnerOrderController::class, 'index']);
+        Route::post('orders/{order}/advance', [OwnerOrderController::class, 'advance']);
+        Route::post('orders/{order}/cancel', [OwnerOrderController::class, 'cancel']);
     });
 
     Route::post('demo/orders/{order}/advance', [DemoController::class, 'advance']);

@@ -58,6 +58,9 @@ Antes de presentar, `php artisan migrate:fresh --seed` deja la base limpia. Qued
 | GET | `/restaurants?category=`, `/restaurants/categories`, `/restaurants/{id}` | Catálogo y menú |
 | GET/POST | `/orders` · GET `/orders/{id}`, `/orders/{id}/route` | Pedidos y ruta simulada |
 | GET | `/driver/orders` · POST `/driver/orders/{id}/advance`, `/driver/orders/{id}/deliver` | Repartidor. `deliver` exige el código (máx. 5 intentos/min) |
+| GET/PUT | `/restaurant/restaurants`, `/restaurant/restaurants/{id}` | Rol restaurante: ver su(s) negocio(s) y abrir/cerrar (`is_active`) |
+| POST/PUT/DELETE | `/restaurant/restaurants/{id}/menu-items`, `/restaurant/menu-items/{id}` | Rol restaurante: gestionar el menú propio |
+| GET · POST | `/restaurant/orders` · `/restaurant/orders/{id}/advance`, `/restaurant/orders/{id}/cancel` | Rol restaurante: pedidos de su negocio (pendiente → confirmado → preparando → en camino) y cancelación. No ve el código de entrega |
 | POST | `/demo/orders/{id}/advance` | Solo con `APP_DEMO=true`: avanza estados sin cambiar de cuenta |
 
 ## 2. App Flutter

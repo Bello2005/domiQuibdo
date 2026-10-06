@@ -12,6 +12,7 @@ class OrderPolicy
     {
         return $user->id === $order->user_id
             || $user->hasRole(UserRole::Admin)
+            || $this->manage($user, $order)
             || $this->deliver($user, $order);
     }
 
@@ -27,5 +28,12 @@ class OrderPolicy
     {
         return $user->hasRole(UserRole::Repartidor)
             && ($order->repartidor_id === null || $order->repartidor_id === $user->id);
+    }
+
+    /** El restaurante dueño gestiona los pedidos de su negocio. */
+    public function manage(User $user, Order $order): bool
+    {
+        return $user->hasRole(UserRole::Restaurante)
+            && $order->restaurant()->where('user_id', $user->id)->exists();
     }
 }
