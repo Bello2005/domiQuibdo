@@ -7,6 +7,7 @@ import '../../core/models.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/generated_cover.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/glass.dart';
 import '../cart/cart_controller.dart';
 import 'catalog_repository.dart';
 
@@ -32,7 +33,7 @@ class RestaurantDetailScreen extends ConsumerWidget {
           SliverAppBar(
             pinned: true,
             stretch: true,
-            expandedHeight: 220,
+            expandedHeight: 250,
             backgroundColor: CategoryStyle.of(category).colors.first,
             foregroundColor: Colors.white,
             title: Text(restaurant?.name ?? ''),
@@ -49,7 +50,7 @@ class RestaurantDetailScreen extends ConsumerWidget {
             sliver: SliverToBoxAdapter(child: SectionTitle('Menú')),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 32 + bottomBarInset(context)),
             sliver: detail.when(
               data: (r) => SliverList.separated(
                 itemCount: r.menu.length,
@@ -104,29 +105,33 @@ class _RestaurantInfo extends StatelessWidget {
     final muted = theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(restaurant.name, style: theme.textTheme.headlineSmall),
-          if (restaurant.description != null) ...[
-            const SizedBox(height: 6),
-            Text(restaurant.description!, style: muted),
-          ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              Chip(
-                avatar: Icon(Icons.star_rounded, color: theme.colorScheme.tertiary),
-                label: Text(restaurant.rating.toStringAsFixed(1)),
-              ),
-              Chip(avatar: const Icon(Icons.schedule), label: Text(restaurant.etaLabel)),
-              Chip(avatar: const Icon(Icons.place_outlined), label: Text(restaurant.addressText)),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Glass(
+        radius: 30,
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(restaurant.name, style: theme.textTheme.headlineSmall),
+            if (restaurant.description != null) ...[
+              const SizedBox(height: 6),
+              Text(restaurant.description!, style: muted),
             ],
-          ),
-        ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Chip(
+                  avatar: Icon(Icons.star_rounded, color: theme.colorScheme.tertiary),
+                  label: Text(restaurant.rating.toStringAsFixed(1)),
+                ),
+                Chip(avatar: const Icon(Icons.schedule), label: Text(restaurant.etaLabel)),
+                Chip(avatar: const Icon(Icons.place_outlined), label: Text(restaurant.addressText)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -165,7 +170,7 @@ class DishTile extends ConsumerWidget {
       cartProvider.select((c) => c.restaurant?.id == restaurant.id ? c.quantityOf(dish.id) : 0),
     );
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -195,15 +200,19 @@ class DishTile extends ConsumerWidget {
                     ),
                   ],
                   const SizedBox(height: 6),
-                  Text(formatCop(dish.price), style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
+                  Text(
+                    formatCop(dish.price),
+                    style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
+                  ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
             quantity == 0
-                ? IconButton.filledTonal(
+                ? IconButton.filled(
                     tooltip: 'Agregar',
-                    icon: const Icon(Icons.add),
+                    style: IconButton.styleFrom(fixedSize: const Size(44, 44)),
+                    icon: const Icon(Icons.add_rounded),
                     onPressed: () => _add(context, ref),
                   )
                 : QuantityStepper(

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 import '../../core/location_service.dart';
 import '../../core/theme.dart';
+import '../../core/widgets/glass.dart';
 import '../orders/order_repository.dart';
 import 'incident_type.dart';
 import 'share_location.dart';
@@ -143,7 +144,7 @@ class _SosAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Card(
+        child: GlassCard(
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             leading: CircleAvatar(

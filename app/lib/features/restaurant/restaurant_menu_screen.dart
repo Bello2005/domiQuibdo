@@ -5,6 +5,7 @@ import '../../core/api_client.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/glass.dart';
 import 'restaurant_repository.dart';
 
 /// Mi negocio: abrir/cerrar el restaurante y administrar el menú.
@@ -28,7 +29,7 @@ class RestaurantMenuScreen extends ConsumerWidget {
               )
             : ResponsiveCenter(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, 32 + bottomBarInset(context)),
                   children: [for (final restaurant in list) _RestaurantSection(restaurant: restaurant)],
                 ),
               ),
@@ -87,7 +88,7 @@ class _RestaurantSectionState extends ConsumerState<_RestaurantSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Card(
+        GlassCard(
           child: SwitchListTile(
             title: Text(restaurant.name, style: theme.textTheme.titleMedium),
             subtitle: Text(restaurant.isActive ? 'Abierto: recibiendo pedidos' : 'Cerrado: los clientes no pueden pedir'),
@@ -107,7 +108,8 @@ class _RestaurantSectionState extends ConsumerState<_RestaurantSection> {
         if (restaurant.menu.isEmpty)
           const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Text('Aún no tienes platos en el menú.')),
         for (final dish in restaurant.menu)
-          Card(
+          GlassCard(
+            margin: const EdgeInsets.only(bottom: 10),
             child: ListTile(
               title: Text(dish.name, style: dish.isAvailable ? null : const TextStyle(decoration: TextDecoration.lineThrough)),
               subtitle: Text(

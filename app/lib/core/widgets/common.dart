@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'glass.dart';
+
 /// Limita el ancho del contenido en pantallas grandes (Chrome) sin afectar móvil.
 class ResponsiveCenter extends StatelessWidget {
   const ResponsiveCenter({super.key, this.maxWidth = 720, required this.child});
@@ -25,10 +27,12 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 10),
+        padding: const EdgeInsets.only(top: 10, bottom: 12, left: 4),
         child: Row(
           children: [
-            Expanded(child: Text(text, style: Theme.of(context).textTheme.titleMedium)),
+            Expanded(
+              child: Text(text, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18)),
+            ),
             ?trailing,
           ],
         ),
@@ -81,10 +85,14 @@ class EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircleAvatar(
-              radius: 44,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(icon, size: 40, color: theme.colorScheme.onPrimaryContainer),
+            Glass(
+              radius: 36,
+              tint: theme.colorScheme.primary,
+              tintStrength: 0.10,
+              child: SizedBox.square(
+                dimension: 96,
+                child: Icon(icon, size: 42, color: theme.colorScheme.primary),
+              ),
             ),
             const SizedBox(height: 20),
             Text(title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
@@ -114,18 +122,26 @@ class InfoBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final fg = foreground ?? scheme.onSecondaryContainer;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: background ?? scheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return Glass(
+      radius: 22,
+      shadow: false,
+      tint: background ?? scheme.secondaryContainer,
+      tintStrength: 0.62,
+      padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
       child: Row(
         children: [
-          Icon(icon, color: fg, size: 22),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(color: fg.withValues(alpha: 0.10), shape: BoxShape.circle),
+            child: Icon(icon, color: fg, size: 20),
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(text, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: fg)),
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: fg, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -143,8 +159,11 @@ class QuantityStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(color: scheme.primaryContainer, borderRadius: BorderRadius.circular(24)),
+    return Glass(
+      radius: 24,
+      shadow: false,
+      tint: scheme.primary,
+      tintStrength: 0.14,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/glass.dart';
 
 extension OrderStatusColors on OrderStatus {
   (Color background, Color foreground) colors(ColorScheme scheme) => switch (this) {
-        OrderStatus.pendiente => (scheme.surfaceContainerHighest, scheme.onSurfaceVariant),
-        OrderStatus.confirmado => (scheme.secondaryContainer, scheme.onSecondaryContainer),
-        OrderStatus.preparando => (scheme.tertiaryContainer, scheme.onTertiaryContainer),
-        OrderStatus.enCamino => (scheme.primary, scheme.onPrimary),
-        OrderStatus.entregado => (scheme.primaryContainer, scheme.onPrimaryContainer),
-        OrderStatus.cancelado => (scheme.errorContainer, scheme.onErrorContainer),
-      };
+    OrderStatus.pendiente => (scheme.surfaceContainerHighest, scheme.onSurfaceVariant),
+    OrderStatus.confirmado => (scheme.secondaryContainer, scheme.onSecondaryContainer),
+    OrderStatus.preparando => (scheme.tertiaryContainer, scheme.onTertiaryContainer),
+    OrderStatus.enCamino => (scheme.primary, scheme.onPrimary),
+    OrderStatus.entregado => (scheme.primaryContainer, scheme.onPrimaryContainer),
+    OrderStatus.cancelado => (scheme.errorContainer, scheme.onErrorContainer),
+  };
 }
 
 class StatusChip extends StatelessWidget {
@@ -24,8 +25,16 @@ class StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (background, foreground) = status.colors(Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color.alphaBlend(Colors.white.withValues(alpha: 0.18), background), background],
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -53,8 +62,18 @@ class StatusStepper extends StatelessWidget {
     final last = OrderStatus.flow.length - 1;
 
     Widget line(bool active) => Expanded(
-          child: Container(height: 3, color: active ? scheme.primary : scheme.outlineVariant),
-        );
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
+        height: 4,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(2),
+          gradient: active
+              ? LinearGradient(colors: [scheme.primary, Color.lerp(scheme.primary, scheme.secondary, 0.6)!])
+              : null,
+          color: active ? null : scheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+    );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,7 +91,27 @@ class StatusStepper extends StatelessWidget {
                       height: 34,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: i <= current ? scheme.primary : scheme.surfaceContainerHighest,
+                        gradient: i <= current
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color.lerp(scheme.primary, Colors.white, 0.18)!, scheme.primary],
+                              )
+                            : null,
+                        color: i <= current ? null : scheme.surfaceContainerHighest.withValues(alpha: 0.7),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: i <= current ? 0.55 : 0.8),
+                          width: 1.5,
+                        ),
+                        boxShadow: i == current
+                            ? [
+                                BoxShadow(
+                                  color: scheme.primary.withValues(alpha: 0.35),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Icon(
                         OrderStatus.flow[i].icon,
@@ -84,11 +123,19 @@ class StatusStepper extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  OrderStatus.flow[i].label,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: i == current ? scheme.primary : scheme.onSurfaceVariant,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      OrderStatus.flow[i].label,
+                      maxLines: 1,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        letterSpacing: 0,
+                        color: i == current ? scheme.primary : scheme.onSurfaceVariant,
+                        fontWeight: i == current ? FontWeight.w800 : FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -107,13 +154,13 @@ class StatusHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(order.headline, style: theme.textTheme.titleLarge),
+            Text(order.headline, style: theme.textTheme.headlineSmall?.copyWith(fontSize: 22)),
             if (order.restaurant != null)
               Text(
                 '${order.restaurant!.name} · ${formatDateTime(order.createdAt)}',
@@ -141,7 +188,7 @@ class VerificationCodeCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     final fg = scheme.onTertiaryContainer;
 
-    return Card(
+    return GlassCard(
       color: scheme.tertiaryContainer,
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -161,16 +208,24 @@ class VerificationCodeCard extends StatelessWidget {
                 for (final digit in code.split(''))
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 6),
-                    width: 56,
-                    height: 68,
+                    width: 58,
+                    height: 72,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: scheme.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [scheme.surface.withValues(alpha: 0.95), scheme.surface.withValues(alpha: 0.7)],
+                      ),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(color: fg.withValues(alpha: 0.10), blurRadius: 12, offset: const Offset(0, 6)),
+                      ],
                     ),
                     child: Text(
                       digit,
-                      style: theme.textTheme.headlineMedium?.copyWith(
+                      style: theme.textTheme.displaySmall?.copyWith(
                         color: delivered ? scheme.onSurfaceVariant : scheme.onSurface,
                         decoration: delivered ? TextDecoration.lineThrough : null,
                       ),
@@ -183,7 +238,7 @@ class VerificationCodeCard extends StatelessWidget {
               delivered
                   ? 'El repartidor validó este código al entregar tu pedido.'
                   : 'Dáselo al repartidor solo cuando tengas tu pedido en la mano. '
-                      'Nadie de DomiQuibdó te lo pedirá por llamada o chat.',
+                        'Nadie de DomiQuibdó te lo pedirá por llamada o chat.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(color: fg),
             ),
@@ -204,7 +259,7 @@ class ContactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return GlassCard(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: CircleAvatar(
@@ -227,7 +282,7 @@ class OrderItemsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

@@ -7,6 +7,7 @@ import '../../core/models.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/generated_cover.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/glass.dart';
 import 'order_repository.dart';
 import 'order_widgets.dart';
 
@@ -41,7 +42,7 @@ class OrdersScreen extends ConsumerWidget {
                   onRefresh: () => ref.refresh(ordersProvider.future),
                   child: ResponsiveCenter(
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomBarInset(context)),
                       itemCount: list.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (_, i) => _OrderCard(order: list[i]),
@@ -65,7 +66,7 @@ class _OrderCard extends StatelessWidget {
     final restaurant = order.restaurant;
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
-    return Card(
+    return GlassCard(
       child: InkWell(
         onTap: () => context.go('/orders/${order.id}'),
         child: Padding(

@@ -8,6 +8,7 @@ import '../../core/config.dart';
 import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/glass.dart';
 import '../safety/share_location.dart';
 import '../safety/sos_sheet.dart';
 import 'order_repository.dart';
@@ -93,9 +94,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                 TileLayer(urlTemplate: AppConfig.osmTileUrl, userAgentPackageName: AppConfig.osmUserAgent),
                 if (route.length >= 2)
                   PolylineLayer(
-                    polylines: [
-                      Polyline(points: route, strokeWidth: 6, color: scheme.primary.withValues(alpha: 0.45)),
-                    ],
+                    polylines: [Polyline(points: route, strokeWidth: 6, color: scheme.primary.withValues(alpha: 0.45))],
                   ),
                 MarkerLayer(
                   markers: [
@@ -112,7 +111,12 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                       child: _MapBadge(icon: destination.tipo.icon, color: AppColors.borojo),
                     ),
                     if (courierAt != null)
-                      Marker(point: courierAt, width: 56, height: 56, child: _CourierMarker(color: scheme.primary)),
+                      Marker(
+                        point: courierAt,
+                        width: 56,
+                        height: 56,
+                        child: _CourierMarker(color: scheme.primary),
+                      ),
                   ],
                 ),
                 const SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
@@ -123,9 +127,13 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    IconButton.filledTonal(
-                      onPressed: () => context.pop(),
-                      icon: const Icon(Icons.arrow_back),
+                    Glass(
+                      blur: true,
+                      radius: 24,
+                      child: SizedBox.square(
+                        dimension: 48,
+                        child: IconButton(onPressed: () => context.pop(), icon: const Icon(Icons.arrow_back_rounded)),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(child: _EtaPill(courier: courier)),
@@ -181,16 +189,15 @@ class _EtaPill extends StatelessWidget {
     final (icon, text) = switch (real) {
       CourierPosition(hasFix: true, hasArrived: true) => (Icons.where_to_vote, 'Tu repartidor llegó'),
       CourierPosition(hasFix: true, live: true) => (Icons.two_wheeler, 'En camino · llega en ~${real.etaMin ?? 1} min'),
-      CourierPosition(hasFix: true) => (Icons.gps_not_fixed, 'Buscando señal del repartidor…'),
-      _ => (Icons.hourglass_top, 'Esperando la ubicación del repartidor…'),
+      CourierPosition(hasFix: true) => (Icons.gps_not_fixed, 'Buscando señal…'),
+      _ => (Icons.hourglass_top, 'Esperando ubicación…'),
     };
 
-    return Material(
-      elevation: 3,
-      color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(24),
+    return Glass(
+      blur: true,
+      radius: 24,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
         child: Row(
           children: [
             Icon(icon, color: theme.colorScheme.primary),
@@ -217,8 +224,9 @@ class _TrackingPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Card(
-      elevation: 6,
+    return GlassCard(
+      blur: true,
+      radius: 30,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -264,10 +272,8 @@ class _TrackingPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: FilledButton.tonalIcon(
-                    onPressed: () => shareViaWhatsApp(
-                      context,
-                      trackingShareMessage(order: order, position: courierPosition),
-                    ),
+                    onPressed: () =>
+                        shareViaWhatsApp(context, trackingShareMessage(order: order, position: courierPosition)),
                     icon: const Icon(Icons.share_location),
                     label: const Text('Compartir por WhatsApp'),
                   ),
@@ -295,39 +301,73 @@ class _MapBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 3),
-          boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black26)],
-        ),
-        child: Icon(icon, color: Colors.white, size: 20),
-      );
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color.lerp(color, Colors.white, 0.22)!, color],
+      ),
+      border: Border.all(color: Colors.white, width: 3),
+      boxShadow: [BoxShadow(blurRadius: 12, offset: const Offset(0, 5), color: color.withValues(alpha: 0.45))],
+    ),
+    child: Icon(icon, color: Colors.white, size: 20),
+  );
 }
 
-class _CourierMarker extends StatelessWidget {
+/// Marcador del repartidor con un pulso continuo, para que se note que la posición es en vivo.
+class _CourierMarker extends StatefulWidget {
   const _CourierMarker({required this.color});
 
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.25), shape: BoxShape.circle),
-          ),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-              boxShadow: const [BoxShadow(blurRadius: 8, color: Colors.black38)],
+  State<_CourierMarker> createState() => _CourierMarkerState();
+}
+
+class _CourierMarkerState extends State<_CourierMarker> with SingleTickerProviderStateMixin {
+  late final _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat();
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.color;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        AnimatedBuilder(
+          animation: _pulse,
+          builder: (context, _) => Transform.scale(
+            scale: 0.6 + _pulse.value * 0.6,
+            child: Container(
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.35 * (1 - _pulse.value)),
+                shape: BoxShape.circle,
+              ),
             ),
-            child: const Icon(Icons.two_wheeler, color: Colors.white, size: 20),
           ),
-        ],
-      );
+        ),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color.lerp(color, Colors.white, 0.2)!, color],
+            ),
+            border: Border.all(color: Colors.white, width: 3),
+            boxShadow: [BoxShadow(blurRadius: 14, offset: const Offset(0, 6), color: color.withValues(alpha: 0.5))],
+          ),
+          child: const Icon(Icons.two_wheeler_rounded, color: Colors.white, size: 20),
+        ),
+      ],
+    );
+  }
 }

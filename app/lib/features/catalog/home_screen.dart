@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/models.dart';
+import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/generated_cover.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/glass.dart';
 import '../addresses/address_repository.dart';
 import '../auth/auth_controller.dart';
 import 'catalog_repository.dart';
@@ -15,7 +17,7 @@ class HomeScreen extends ConsumerWidget {
 
   static const _grid = SliverGridDelegateWithMaxCrossAxisExtent(
     maxCrossAxisExtent: 460,
-    mainAxisExtent: 232,
+    mainAxisExtent: 262,
     mainAxisSpacing: 16,
     crossAxisSpacing: 16,
   );
@@ -36,16 +38,24 @@ class HomeScreen extends ConsumerWidget {
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              floating: true,
-              toolbarHeight: 76,
+              pinned: true,
+              toolbarHeight: 84,
               titleSpacing: 20,
+              flexibleSpace: const GlassBarBackground(),
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Hola, ${user?.firstName ?? ''}', style: Theme.of(context).textTheme.titleLarge),
+                  Text('Hola, ${user?.firstName ?? ''}', style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: 4),
                   const _DeliveryAddressPill(),
                 ],
               ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: _ProfileBadge(initial: (user?.firstName ?? '?').characters.first.toUpperCase()),
+                ),
+              ],
             ),
             const SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: 20),
@@ -53,7 +63,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SliverToBoxAdapter(child: _CategoryChips()),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+              padding: EdgeInsets.fromLTRB(20, 4, 20, 24 + bottomBarInset(context)),
               sliver: restaurants.when(
                 data: (list) => list.isEmpty
                     ? const SliverToBoxAdapter(
@@ -96,11 +106,14 @@ class _DeliveryAddressPill extends ConsumerWidget {
     final address = ref.watch(defaultAddressProvider).valueOrNull;
     final theme = Theme.of(context);
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
+    return Glass(
+      radius: 20,
+      shadow: false,
+      tint: theme.colorScheme.primary,
+      tintStrength: 0.06,
       onTap: () => context.go('/profile/addresses'),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
+        padding: const EdgeInsets.fromLTRB(8, 5, 6, 5),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -178,35 +191,76 @@ class RestaurantCard extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
-    return Card(
-      child: InkWell(
-        onTap: () => context.go('/home/restaurant/${restaurant.id}', extra: restaurant),
+    return GlassCard(
+      radius: 30,
+      onTap: () => context.go('/home/restaurant/${restaurant.id}', extra: restaurant),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Hero(
-              tag: 'restaurant-cover-${restaurant.id}',
-              child: GeneratedCover(category: restaurant.category, height: 140, seed: restaurant.id),
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Hero(
+                    tag: 'restaurant-cover-${restaurant.id}',
+                    child: GeneratedCover(
+                      category: restaurant.category,
+                      seed: restaurant.id,
+                      borderRadius: BorderRadius.circular(23),
+                    ),
+                  ),
+                  Positioned(
+                    left: 10,
+                    top: 10,
+                    child: GlassPill(
+                      icon: Icons.star_rounded,
+                      label: restaurant.rating.toStringAsFixed(1),
+                      iconColor: const Color(0xFFFFC86B),
+                    ),
+                  ),
+                  Positioned(
+                    right: 10,
+                    top: 10,
+                    child: GlassPill(icon: Icons.schedule_rounded, label: restaurant.etaLabel),
+                  ),
+                ],
+              ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: const EdgeInsets.fromLTRB(10, 12, 6, 6),
+              child: Row(
                 children: [
-                  Text(restaurant.name, style: theme.textTheme.titleMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Flexible(child: Text(restaurant.category, style: muted, overflow: TextOverflow.ellipsis)),
-                      Text('  ·  ', style: muted),
-                      Icon(Icons.star_rounded, size: 16, color: theme.colorScheme.tertiary),
-                      const SizedBox(width: 2),
-                      Text(restaurant.rating.toStringAsFixed(1), style: muted),
-                      Text('  ·  ', style: muted),
-                      Icon(Icons.schedule, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text(restaurant.etaLabel, style: muted),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          restaurant.name,
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${restaurant.category} · ${restaurant.addressText}',
+                          style: muted,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.10),
+                    ),
+                    child: Icon(Icons.arrow_forward_rounded, size: 18, color: theme.colorScheme.primary),
                   ),
                 ],
               ),
@@ -216,4 +270,32 @@ class RestaurantCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Inicial del usuario en un círculo con el degradado de marca.
+class _ProfileBadge extends StatelessWidget {
+  const _ProfileBadge({required this.initial});
+
+  final String initial;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    customBorder: const CircleBorder(),
+    onTap: () => context.go('/profile'),
+    child: Container(
+      width: 44,
+      height: 44,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppColors.brandGradient,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
+        boxShadow: const [BoxShadow(color: Color(0x331B5E3F), blurRadius: 14, offset: Offset(0, 6))],
+      ),
+      child: Text(
+        initial,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+      ),
+    ),
+  );
 }

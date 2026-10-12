@@ -11,16 +11,16 @@ class CategoryStyle {
   final IconData icon;
 
   static CategoryStyle of(String category) => switch (category) {
-        'Gama alta' => const CategoryStyle([Color(0xFF0F3B2A), AppColors.rio], Icons.wine_bar),
-        'Chocoana' => const CategoryStyle([AppColors.rio, AppColors.selva], Icons.set_meal),
-        'Típica' => const CategoryStyle([AppColors.borojo, Color(0xFFA63D23)], Icons.rice_bowl),
-        'Parrilla' => const CategoryStyle([Color(0xFF7A2716), AppColors.borojo], Icons.outdoor_grill),
-        'Pollo' => const CategoryStyle([Color(0xFFF2A33A), Color(0xFFC8561E)], Icons.dinner_dining),
-        'Heladería' => const CategoryStyle([Color(0xFFD9577F), Color(0xFFF2A65A)], Icons.icecream),
-        'Panadería' => const CategoryStyle([Color(0xFFB9824F), Color(0xFF6E4527)], Icons.bakery_dining),
-        'Comida rápida' => const CategoryStyle([Color(0xFFE9A800), Color(0xFFD45B1F)], Icons.lunch_dining),
-        _ => const CategoryStyle([AppColors.selva, AppColors.rio], Icons.storefront),
-      };
+    'Gama alta' => const CategoryStyle([Color(0xFF0F3B2A), AppColors.rio], Icons.wine_bar),
+    'Chocoana' => const CategoryStyle([AppColors.rio, AppColors.selva], Icons.set_meal),
+    'Típica' => const CategoryStyle([AppColors.borojo, Color(0xFFA63D23)], Icons.rice_bowl),
+    'Parrilla' => const CategoryStyle([Color(0xFF7A2716), AppColors.borojo], Icons.outdoor_grill),
+    'Pollo' => const CategoryStyle([Color(0xFFF2A33A), Color(0xFFC8561E)], Icons.dinner_dining),
+    'Heladería' => const CategoryStyle([Color(0xFFD9577F), Color(0xFFF2A65A)], Icons.icecream),
+    'Panadería' => const CategoryStyle([Color(0xFFB9824F), Color(0xFF6E4527)], Icons.bakery_dining),
+    'Comida rápida' => const CategoryStyle([Color(0xFFE9A800), Color(0xFFD45B1F)], Icons.lunch_dining),
+    _ => const CategoryStyle([AppColors.selva, AppColors.rio], Icons.storefront),
+  };
 }
 
 class GeneratedCover extends StatelessWidget {
@@ -74,12 +74,41 @@ class GeneratedCover extends StatelessWidget {
                   child: Icon(style.icon, size: iconSize * 3.2, color: Colors.white.withValues(alpha: 0.14)),
                 ),
               ),
+              // Brillo superior: le da profundidad de vidrio a la portada.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.16),
+                        Colors.white.withValues(alpha: 0),
+                        Colors.black.withValues(alpha: 0.10),
+                      ],
+                      stops: const [0, 0.5, 1],
+                    ),
+                  ),
+                ),
+              ),
               Center(
                 child: Container(
-                  padding: EdgeInsets.all(iconSize * 0.3),
+                  padding: EdgeInsets.all(iconSize * 0.34),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
                     shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.white.withValues(alpha: 0.34), Colors.white.withValues(alpha: 0.10)],
+                    ),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.45), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
                   child: Icon(style.icon, size: iconSize, color: Colors.white),
                 ),
@@ -100,8 +129,11 @@ class _Blob extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: opacity), shape: BoxShape.circle),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: opacity),
+      shape: BoxShape.circle,
+    ),
+  );
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/models.dart';
+import '../../core/widgets/glass.dart';
 
 class AddressCard extends StatelessWidget {
   const AddressCard({super.key, required this.address, this.trailing, this.onTap});
@@ -14,7 +15,7 @@ class AddressCard extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Card(
+    return GlassCard(
       child: InkWell(
         onTap: onTap,
         child: Padding(

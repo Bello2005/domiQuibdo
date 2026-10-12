@@ -7,6 +7,7 @@ import '../../core/models.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/generated_cover.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/glass.dart';
 import '../orders/order_repository.dart';
 import '../orders/order_widgets.dart';
 
@@ -38,7 +39,7 @@ class DriverHomeScreen extends ConsumerWidget {
           error: (error, _) => ErrorView(message: error.toString(), onRetry: () => ref.invalidate(driverOrdersProvider)),
           data: (list) => ResponsiveCenter(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomBarInset(context)),
               children: [
                 InfoBanner(
                   icon: Icons.verified_user_outlined,
@@ -78,7 +79,7 @@ class _DriverOrderCard extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
 
-    return Card(
+    return GlassCard(
       child: InkWell(
         onTap: () => context.push('/driver/order/${order.id}'),
         child: Padding(

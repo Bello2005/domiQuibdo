@@ -6,6 +6,7 @@ import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/glass.dart';
 import '../orders/order_widgets.dart';
 import 'restaurant_repository.dart';
 
@@ -43,7 +44,7 @@ class RestaurantOrdersScreen extends ConsumerWidget {
                   child: RefreshIndicator(
                     onRefresh: () => ref.refresh(ownerOrdersProvider.future),
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                      padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomBarInset(context)),
                       itemCount: list.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (_, i) => _OwnerOrderCard(order: list[i]),
@@ -108,7 +109,7 @@ class _OwnerOrderCardState extends ConsumerState<_OwnerOrderCard> {
         order.status == OrderStatus.confirmado ||
         order.status == OrderStatus.preparando;
 
-    return Card(
+    return GlassCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

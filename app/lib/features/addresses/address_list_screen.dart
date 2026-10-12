@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api_client.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/glass.dart';
 import 'address_repository.dart';
 import 'address_widgets.dart';
 
@@ -50,7 +51,7 @@ class AddressListScreen extends ConsumerWidget {
               )
             : ResponsiveCenter(
                 child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                  padding: EdgeInsets.fromLTRB(20, 8, 20, 96 + bottomBarInset(context)),
                   itemCount: list.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, i) {

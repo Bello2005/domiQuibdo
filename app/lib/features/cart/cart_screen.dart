@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/generated_cover.dart';
+import '../../core/widgets/glass.dart';
 import 'cart_controller.dart';
 
 class CartScreen extends ConsumerWidget {
@@ -64,7 +65,7 @@ class CartScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             for (final line in cart.lines.values) ...[
-              Card(
+              GlassCard(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(

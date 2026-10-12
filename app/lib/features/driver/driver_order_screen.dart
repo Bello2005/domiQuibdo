@@ -14,6 +14,7 @@ import '../../core/location_service.dart';
 import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/glass.dart';
 import '../orders/order_repository.dart';
 import '../orders/order_widgets.dart';
 import '../safety/share_location.dart';
@@ -64,7 +65,7 @@ class DriverOrderScreen extends ConsumerWidget {
           error: (error, _) => ErrorView(message: error.toString(), onRetry: () => ref.invalidate(orderDetailProvider(id))),
           data: (order) => ResponsiveCenter(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 32 + bottomBarInset(context)),
               children: [
                 StatusHeaderCard(order: order),
                 const SizedBox(height: 12),
@@ -204,7 +205,7 @@ class _DeliveryPointCard extends ConsumerWidget {
         ? ref.watch(courierPositionProvider(order.id)).valueOrNull?.position
         : null;
 
-    return Card(
+    return GlassCard(
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -367,7 +368,7 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
     }
 
     if (order.status == OrderStatus.enCamino) {
-      return Card(
+      return GlassCard(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(

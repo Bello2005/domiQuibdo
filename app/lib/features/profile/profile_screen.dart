@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme.dart';
 import '../../core/settings.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/glass.dart';
 import '../auth/auth_controller.dart';
 import '../cart/cart_controller.dart';
 
@@ -23,18 +25,24 @@ class ProfileScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Perfil')),
       body: ResponsiveCenter(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 32 + bottomBarInset(context)),
           children: [
-            Card(
+            GlassCard(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: scheme.primary,
-                      foregroundColor: scheme.onPrimary,
-                      child: Text(user.initials, style: theme.textTheme.titleLarge?.copyWith(color: scheme.onPrimary)),
+                    Container(
+                      width: 68,
+                      height: 68,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppColors.brandGradient,
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2.5),
+                        boxShadow: const [BoxShadow(color: Color(0x401B5E3F), blurRadius: 18, offset: Offset(0, 8))],
+                      ),
+                      child: Text(user.initials, style: theme.textTheme.titleLarge?.copyWith(color: Colors.white)),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -65,7 +73,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
             if (!user.isDriver && !user.isRestaurant) ...[
               const SizedBox(height: 12),
-              Card(
+              GlassCard(
                 child: ListTile(
                   leading: const Icon(Icons.location_on_outlined),
                   title: const Text('Mis direcciones'),
@@ -76,7 +84,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ],
             const SizedBox(height: 12),
-            Card(
+            GlassCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -88,8 +96,9 @@ class ProfileScreen extends ConsumerWidget {
                         Text('Apariencia', style: theme.textTheme.titleSmall),
                         const SizedBox(height: 10),
                         SegmentedButton<ThemeMode>(
+                          showSelectedIcon: false,
                           segments: const [
-                            ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto), label: Text('Sistema')),
+                            ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto), label: Text('Auto')),
                             ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Text('Claro')),
                             ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Text('Oscuro')),
                           ],
@@ -103,7 +112,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            const Card(
+            const GlassCard(
               child: ListTile(
                 leading: Icon(Icons.shield_outlined),
                 title: Text('Seguridad en cada entrega'),

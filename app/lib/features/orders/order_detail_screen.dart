@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/api_client.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
+import '../../core/widgets/glass.dart';
 import '../addresses/address_widgets.dart';
 import 'order_repository.dart';
 import 'order_widgets.dart';
@@ -29,7 +30,7 @@ class OrderDetailScreen extends ConsumerWidget {
           error: (error, _) => ErrorView(message: error.toString(), onRetry: () => ref.invalidate(orderDetailProvider(id))),
           data: (order) => ResponsiveCenter(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 32 + bottomBarInset(context)),
               children: [
                 StatusHeaderCard(order: order),
                 if (order.isOnlinePayment) ...[

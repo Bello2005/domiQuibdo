@@ -7,6 +7,7 @@ import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/skeleton.dart';
+import '../../core/widgets/glass.dart';
 import '../addresses/address_repository.dart';
 import '../addresses/address_widgets.dart';
 import '../orders/order_repository.dart';
@@ -135,27 +136,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             const SizedBox(height: 20),
             const SectionTitle('Método de pago'),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final value in checkoutPaymentMethods)
-                  ChoiceChip(
-                    avatar: Icon(paymentMethods[value]!.$2, size: 18),
-                    label: Text(paymentMethods[value]!.$1),
-                    selected: _payment == value,
-                    onSelected: (_) => setState(() => _payment = value),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _payment == 'payu'
-                  ? 'Pagas con tarjeta, PSE, Nequi y más en la pasarela segura de PayU. '
-                      'El restaurante empieza cuando el pago quede aprobado.'
-                  : 'Pagas en efectivo al repartidor cuando recibas tu pedido.',
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-            ),
+            for (final value in checkoutPaymentMethods) ...[
+              _PaymentOption(
+                icon: paymentMethods[value]!.$2,
+                title: paymentMethods[value]!.$1,
+                subtitle: value == 'payu'
+                    ? 'Tarjeta, PSE, Nequi y más en la pasarela segura de PayU.'
+                    : 'Le pagas al repartidor cuando recibas tu pedido.',
+                selected: _payment == value,
+                onTap: () => setState(() => _payment = value),
+              ),
+              const SizedBox(height: 10),
+            ],
+            if (_payment == 'payu')
+              Text(
+                'El restaurante empieza a preparar tu pedido cuando el pago quede aprobado.',
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
             const SizedBox(height: 20),
             const SectionTitle('Notas para el restaurante'),
             TextField(
@@ -165,7 +162,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               decoration: const InputDecoration(hintText: 'Ej: sin cebolla, el timbre no funciona…'),
             ),
             const SizedBox(height: 8),
-            Card(
+            GlassCard(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -202,3 +199,82 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 }
+
+/// Opción de pago como tarjeta seleccionable: más clara que un chip para una decisión importante.
+class _PaymentOption extends StatelessWidget {
+  const _PaymentOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: selected ? scheme.primary : Colors.transparent, width: 1.6),
+        ),
+        child: Glass(
+          radius: 22,
+          tint: selected ? scheme.primary : null,
+          tintStrength: 0.10,
+          onTap: onTap,
+          padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: (selected ? scheme.primary : scheme.onSurfaceVariant).withValues(alpha: 0.12),
+                ),
+                child: Icon(icon, color: selected ? scheme.primary : scheme.onSurfaceVariant),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: selected ? scheme.primary : Colors.transparent,
+                  border: Border.all(color: selected ? scheme.primary : scheme.outline, width: 2),
+                ),
+                child: selected ? Icon(Icons.check_rounded, size: 16, color: scheme.onPrimary) : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
