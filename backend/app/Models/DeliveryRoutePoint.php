@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Table('delivery_mock_route')]
+#[Table('delivery_route_points')]
 #[Fillable(['sequence', 'latitude', 'longitude'])]
 #[WithoutTimestamps]
-class DeliveryMockRoutePoint extends Model
+class DeliveryRoutePoint extends Model
 {
     protected function casts(): array
     {

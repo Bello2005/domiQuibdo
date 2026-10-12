@@ -11,7 +11,7 @@ use Illuminate\Database\Seeder;
 class DemoOrderSeeder extends Seeder
 {
     /**
-     * Un pedido ya "en camino" para abrir el tracking de inmediato en la demo.
+     * Un pedido ya "en camino" para probar el tracking en local y en los tests.
      */
     public function run(OrderService $orders): void
     {
@@ -23,7 +23,7 @@ class DemoOrderSeeder extends Seeder
             'address_id' => $cliente->addresses()->value('id'),
             'items' => $menu->map(fn ($item) => ['menu_item_id' => $item->id, 'quantity' => 1])->all(),
             'payment_method' => 'efectivo',
-            'notes' => 'Pedido de demostración.',
+            'notes' => 'Pedido de prueba.',
         ]);
 
         $order->update(['status' => OrderStatus::EnCamino, 'repartidor_id' => $repartidor->id]);

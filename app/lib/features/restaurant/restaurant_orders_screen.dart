@@ -102,7 +102,8 @@ class _OwnerOrderCardState extends ConsumerState<_OwnerOrderCard> {
     final muted = theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant);
     final next = order.status.next;
     // El restaurante llega hasta "en camino" (entrega al repartidor); la entrega final es del repartidor.
-    final canAdvance = next != null && next != OrderStatus.entregado;
+    // Un pago en línea sin aprobar no se prepara todavía (el servidor también lo impide).
+    final canAdvance = next != null && next != OrderStatus.entregado && !order.isAwaitingPayment;
     final canCancel = order.status == OrderStatus.pendiente ||
         order.status == OrderStatus.confirmado ||
         order.status == OrderStatus.preparando;
@@ -145,6 +146,21 @@ class _OwnerOrderCardState extends ConsumerState<_OwnerOrderCard> {
                 Expanded(child: Text('Total ${formatCop(order.total)} · ${order.paymentLabel}', style: theme.textTheme.titleSmall)),
               ],
             ),
+            if (order.isOnlinePayment && order.paymentStatus != null) ...[
+              const SizedBox(height: 8),
+              InfoBanner(
+                icon: order.isAwaitingPayment ? Icons.hourglass_top : Icons.verified,
+                text: order.isAwaitingPayment
+                    ? '${order.paymentStatus!.label}: espera a que PayU apruebe el pago antes de prepararlo.'
+                    : 'Pagado en línea con PayU. No cobres al entregar.',
+                background: order.isAwaitingPayment
+                    ? theme.colorScheme.tertiaryContainer
+                    : theme.colorScheme.primaryContainer,
+                foreground: order.isAwaitingPayment
+                    ? theme.colorScheme.onTertiaryContainer
+                    : theme.colorScheme.onPrimaryContainer,
+              ),
+            ],
             if (canAdvance || canCancel) ...[
               const SizedBox(height: 12),
               Row(

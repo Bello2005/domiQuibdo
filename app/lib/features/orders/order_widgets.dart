@@ -113,7 +113,7 @@ class StatusHeaderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(order.status.headline, style: theme.textTheme.titleLarge),
+            Text(order.headline, style: theme.textTheme.titleLarge),
             if (order.restaurant != null)
               Text(
                 '${order.restaurant!.name} · ${formatDateTime(order.createdAt)}',
@@ -243,7 +243,12 @@ class OrderItemsCard extends StatelessWidget {
               children: [
                 Icon(paymentMethods[order.paymentMethod]?.$2 ?? Icons.payments_outlined, size: 18),
                 const SizedBox(width: 8),
-                Text('Pago: ${order.paymentLabel}', style: theme.textTheme.bodySmall),
+                Expanded(
+                  child: Text(
+                    'Pago: ${order.paymentLabel}${order.paymentStatus == null ? '' : ' · ${order.paymentStatus!.label}'}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
               ],
             ),
           ],

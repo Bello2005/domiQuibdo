@@ -1,7 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_client.dart';
 import '../../core/location_service.dart';
@@ -10,8 +9,8 @@ import '../orders/order_repository.dart';
 import 'incident_type.dart';
 import 'share_location.dart';
 
-/// Botón SOS. La alerta y los reportes se guardan en el backend (soporte los ve en el panel);
-/// la llamada al 123 sigue siendo simulada: no se marca ningún número real.
+/// Botón SOS. La alerta y los reportes se guardan en el backend (soporte los ve en el panel) y
+/// "Llamar" abre el marcador del teléfono con el 123 listo: la persona confirma la llamada.
 Future<void> showSosSheet(BuildContext context, {required int orderId, required String shareMessage}) =>
     showModalBottomSheet<void>(
       context: context,
@@ -75,14 +74,19 @@ class _SosSheet extends ConsumerWidget {
               icon: Icons.local_police_outlined,
               color: AppColors.sos,
               title: 'Llamar a emergencias · 123',
-              subtitle: 'Policía Nacional (llamada simulada en esta demo)',
+              subtitle: 'Policía Nacional · también avisamos a soporte',
               onTap: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                Navigator.pop(context);
                 final registered = _report(ref, IncidentType.sos);
-                await showDialog<void>(
-                  context: context,
-                  builder: (_) => _SimulatedCallDialog(registered: registered),
-                );
-                if (context.mounted) Navigator.pop(context);
+                final dialed = await launchUrl(Uri.parse('tel:123'), mode: LaunchMode.externalApplication);
+                final sent = await registered;
+                messenger.showSnackBar(SnackBar(
+                  content: Text([
+                    if (!dialed) 'No se pudo abrir el marcador: llama al 123 desde tu teléfono.',
+                    sent ? 'Alerta SOS enviada a soporte con tu ubicación.' : 'No pudimos avisar a soporte: revisa tu conexión.',
+                  ].join(' ')),
+                ));
               },
             ),
             _SosAction(
@@ -110,7 +114,7 @@ class _SosSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'La llamada al 123 es simulada en esta demo; tu alerta y tus reportes sí quedan registrados para soporte.',
+              'Tus alertas y reportes quedan registrados con tu ubicación para que soporte te contacte.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
@@ -154,74 +158,4 @@ class _SosAction extends StatelessWidget {
           ),
         ),
       );
-}
-
-class _SimulatedCallDialog extends StatefulWidget {
-  const _SimulatedCallDialog({required this.registered});
-
-  /// Resultado de guardar la alerta SOS en el backend (se resuelve mientras corre la cuenta regresiva).
-  final Future<bool> registered;
-
-  @override
-  State<_SimulatedCallDialog> createState() => _SimulatedCallDialogState();
-}
-
-class _SimulatedCallDialogState extends State<_SimulatedCallDialog> {
-  static const _seconds = 3;
-  int _remaining = _seconds;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() => _remaining--);
-      if (_remaining <= 0) timer.cancel();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final calling = _remaining > 0;
-
-    return AlertDialog(
-      icon: Icon(calling ? Icons.phone_in_talk : Icons.check_circle_outline, size: 44, color: AppColors.sos),
-      title: Text(calling ? 'Llamando al 123 en $_remaining…' : 'Llamada simulada'),
-      content: calling
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(value: 1 - _remaining / _seconds, color: AppColors.sos),
-                const SizedBox(height: 12),
-                const Text('Puedes cancelar si fue un error.'),
-              ],
-            )
-          : FutureBuilder<bool>(
-              future: widget.registered,
-              builder: (context, snapshot) => Text(
-                switch (snapshot.data) {
-                  true => 'Tu alerta SOS quedó registrada con tu ubicación y soporte ya puede verla. '
-                      'En la versión final, la app también marcará la Línea 123.',
-                  false => 'No pudimos registrar la alerta por falta de conexión. '
-                      'Si estás en peligro, llama directamente al 123.',
-                  null => 'Registrando tu alerta…',
-                },
-                style: theme.textTheme.bodyMedium,
-              ),
-            ),
-      actions: [
-        if (calling)
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar'))
-        else
-          FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Entendido')),
-      ],
-    );
-  }
 }

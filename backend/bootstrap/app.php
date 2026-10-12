@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureRestaurante;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,9 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
-            'restaurante' => \App\Http\Middleware\EnsureRestaurante::class,
+            'admin' => EnsureAdmin::class,
+            'restaurante' => EnsureRestaurante::class,
         ]);
+        // No hay pantalla de login web: un invitado en la API recibe 401 en JSON, no un redirect.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

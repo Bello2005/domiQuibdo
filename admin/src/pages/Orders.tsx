@@ -113,6 +113,7 @@ export function Orders() {
                 <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3">Ítems</th>
                 <th className="px-4 py-3">Total</th>
+                <th className="px-4 py-3">Pago</th>
                 <th className="px-4 py-3">Fecha</th>
               </tr>
             </thead>
@@ -153,6 +154,23 @@ export function Orders() {
                   </td>
                   <td className="px-4 py-3">{order.items_count ?? '—'}</td>
                   <td className="px-4 py-3 font-medium">{currency.format(order.total)}</td>
+                  <td className="px-4 py-3">
+                    {order.payment_method === 'payu' ? (
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          order.payment_status === 'aprobado'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : order.payment_status === 'pendiente'
+                              ? 'bg-amber-100 text-amber-700'
+                              : 'bg-rose-100 text-rose-700'
+                        }`}
+                      >
+                        PayU · {order.payment_status_label}
+                      </span>
+                    ) : (
+                      <span className="text-slate-500">Efectivo</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-slate-500">{formatDate(order.created_at)}</td>
                 </tr>
               ))}

@@ -25,10 +25,14 @@ services:
         condition: service_healthy
     environment:
       APP_ENV: production
+      PAYU_MERCHANT_ID: ${PAYU_MERCHANT_ID:-508029}
+      PAYU_ACCOUNT_ID: ${PAYU_ACCOUNT_ID:-512321}
+      PAYU_API_KEY: ${PAYU_API_KEY:-4Vj8eK4rloUd272L48hsrarnUA}
+      PAYU_TEST: ${PAYU_TEST:-true}
+      PAYU_CHECKOUT_URL: ${PAYU_CHECKOUT_URL:-https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/}
       APP_DEBUG: "false"
       APP_KEY: ${APP_KEY}
       APP_URL: ${APP_URL}
-      APP_DEMO: ${APP_DEMO:-true}
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432

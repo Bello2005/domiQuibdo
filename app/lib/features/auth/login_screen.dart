@@ -43,12 +43,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _fillDemo(String email) {
-    _email.text = email;
-    _password.text = 'password';
-    _submit();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -109,31 +103,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextButton(
                       onPressed: () => context.go('/register'),
                       child: const Text('¿No tienes cuenta? Regístrate'),
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Cuentas de prueba',
-                      style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 8,
-                      children: [
-                        ActionChip(
-                          avatar: const Icon(Icons.person_outline, size: 18),
-                          label: const Text('Cliente'),
-                          onPressed: _loading ? null : () => _fillDemo('cliente@demo.co'),
-                        ),
-                        ActionChip(
-                          avatar: const Icon(Icons.two_wheeler, size: 18),
-                          label: const Text('Repartidor'),
-                          onPressed: _loading ? null : () => _fillDemo('repartidor@demo.co'),
-                        ),
-                      ],
                     ),
                   ],
                 ),

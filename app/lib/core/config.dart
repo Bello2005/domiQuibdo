@@ -12,7 +12,4 @@ abstract final class AppConfig {
   static const osmUserAgent = 'co.uniclaretiana.domiquibdo';
 
   static const quibdoCenter = LatLng(5.6935, -76.6600);
-
-  /// Sprint 0: cada cuánto avanza el marcador entre puntos de la ruta simulada.
-  static const mockStepDuration = Duration(milliseconds: 3500);
 }

@@ -10,6 +10,7 @@ import '../../core/widgets/skeleton.dart';
 import '../addresses/address_repository.dart';
 import '../addresses/address_widgets.dart';
 import '../orders/order_repository.dart';
+import '../orders/payment.dart';
 import 'cart_controller.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -74,6 +75,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             notes: _notes.text.trim(),
           );
       ref.invalidate(ordersProvider);
+      // Pago en línea: se abre la pasarela de una vez; si el cliente la cierra, paga desde el pedido.
+      if (order.isOnlinePayment && mounted) await openPayuCheckout(context, ref, order.id);
       if (!mounted) return;
       context.go('/orders/${order.id}');
       cartController.clear();
@@ -136,22 +139,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final MapEntry(key: value, value: (label, icon)) in paymentMethods.entries)
+                for (final value in checkoutPaymentMethods)
                   ChoiceChip(
-                    avatar: Icon(icon, size: 18),
-                    label: Text(label),
+                    avatar: Icon(paymentMethods[value]!.$2, size: 18),
+                    label: Text(paymentMethods[value]!.$1),
                     selected: _payment == value,
                     onSelected: (_) => setState(() => _payment = value),
                   ),
               ],
             ),
-            if (_payment != 'efectivo') ...[
-              const SizedBox(height: 8),
-              Text(
-                'Sprint 0: el pago se coordina al recibir. La pasarela de pagos llega en la siguiente fase.',
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              ),
-            ],
+            const SizedBox(height: 8),
+            Text(
+              _payment == 'payu'
+                  ? 'Pagas con tarjeta, PSE, Nequi y más en la pasarela segura de PayU. '
+                      'El restaurante empieza cuando el pago quede aprobado.'
+                  : 'Pagas en efectivo al repartidor cuando recibas tu pedido.',
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
             const SizedBox(height: 20),
             const SectionTitle('Notas para el restaurante'),
             TextField(
@@ -191,7 +195,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             onPressed: address == null || _placing ? null : () => _place(cart, address),
             child: _placing
                 ? const SizedBox.square(dimension: 22, child: CircularProgressIndicator(strokeWidth: 2.5))
-                : Text('Confirmar pedido · ${formatCop(total)}'),
+                : Text('${_payment == 'payu' ? 'Pagar' : 'Confirmar pedido'} · ${formatCop(total)}'),
           ),
         ),
       ),

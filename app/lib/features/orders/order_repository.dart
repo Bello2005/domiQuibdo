@@ -68,7 +68,11 @@ class OrderRepository {
         }),
       );
 
-  Future<Order> demoAdvance(int id) => _order(() => _dio.post('demo/orders/$id/advance'));
+  /// Enlace firmado al checkout de PayU; null si el pedido ya no tiene un pago pendiente.
+  Future<String?> paymentCheckoutUrl(int id) => guardApi(() async {
+        final response = await _dio.get<Map<String, dynamic>>('orders/$id/payment');
+        return response.data!['checkout_url'] as String?;
+      });
 
   Future<List<Order>> driverOrders() => _orders('driver/orders');
 

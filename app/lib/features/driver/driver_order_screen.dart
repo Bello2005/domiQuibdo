@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart' show Position;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../core/api_client.dart';
 import '../../core/config.dart';
@@ -55,7 +56,9 @@ class DriverOrderScreen extends ConsumerWidget {
       ),
       body: PeriodicRefresh(
         interval: const Duration(seconds: 5),
-        onTick: (ref) => ref.invalidate(orderDetailProvider(id)),
+        onTick: (ref) => ref
+          ..invalidate(orderDetailProvider(id))
+          ..invalidate(courierPositionProvider(id)),
         child: orderAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => ErrorView(message: error.toString(), onRetry: () => ref.invalidate(orderDetailProvider(id))),
@@ -183,40 +186,64 @@ class _LocationSharingState extends ConsumerState<_LocationSharing> {
   }
 }
 
-class _DeliveryPointCard extends StatelessWidget {
+/// Mapa con el restaurante, el punto de entrega, la ruta y la última posición que este
+/// repartidor reportó por GPS, más accesos directos para navegar a cada punto.
+class _DeliveryPointCard extends ConsumerWidget {
   const _DeliveryPointCard({required this.order});
 
   final Order order;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final address = order.address!;
     final restaurant = order.restaurant!;
+    final route = ref.watch(orderRouteProvider(order.id)).valueOrNull ?? const <LatLng>[];
+    final me = order.status == OrderStatus.enCamino
+        ? ref.watch(courierPositionProvider(order.id)).valueOrNull?.position
+        : null;
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            height: 170,
+            height: 220,
             child: FlutterMap(
+              // Al llegar la primera posición se recrea el mapa para encuadrarla también.
+              key: ValueKey(me != null),
               options: MapOptions(
-                initialCenter: address.position,
-                initialZoom: 16,
+                initialCameraFit: CameraFit.coordinates(
+                  coordinates: [restaurant.position, address.position, ?me],
+                  padding: const EdgeInsets.all(36),
+                  maxZoom: 17,
+                ),
                 interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
               ),
               children: [
                 TileLayer(urlTemplate: AppConfig.osmTileUrl, userAgentPackageName: AppConfig.osmUserAgent),
+                if (route.length >= 2)
+                  PolylineLayer(
+                    polylines: [Polyline(points: route, strokeWidth: 5, color: scheme.primary.withValues(alpha: 0.45))],
+                  ),
                 MarkerLayer(
                   markers: [
                     Marker(
-                      point: address.position,
-                      width: 48,
-                      height: 48,
-                      alignment: Alignment.topCenter,
-                      child: const Icon(Icons.location_on, size: 48, color: AppColors.borojo),
+                      point: restaurant.position,
+                      width: 36,
+                      height: 36,
+                      child: _PointBadge(icon: Icons.storefront, color: scheme.secondary),
                     ),
+                    Marker(
+                      point: address.position,
+                      width: 36,
+                      height: 36,
+                      child: _PointBadge(icon: address.tipo.icon, color: AppColors.borojo),
+                    ),
+                    if (me != null)
+                      Marker(point: me, width: 40, height: 40, child: _PointBadge(icon: Icons.two_wheeler, color: scheme.primary)),
                   ],
                 ),
               ],
@@ -226,11 +253,21 @@ class _DeliveryPointCard extends StatelessWidget {
             leading: const Icon(Icons.storefront_outlined),
             title: Text('Recoger en ${restaurant.name}'),
             subtitle: Text(restaurant.addressText),
+            trailing: IconButton(
+              tooltip: 'Cómo llegar al restaurante',
+              onPressed: () => openDirections(restaurant.position),
+              icon: const Icon(Icons.directions),
+            ),
           ),
           ListTile(
             leading: Icon(address.tipo.icon),
             title: Text('Entregar en ${address.title}'),
             subtitle: address.detalle == null ? null : Text(address.detalle!),
+            trailing: IconButton(
+              tooltip: 'Cómo llegar a la entrega',
+              onPressed: () => openDirections(address.position),
+              icon: const Icon(Icons.directions),
+            ),
           ),
           if (order.notes != null)
             Padding(
@@ -241,6 +278,24 @@ class _DeliveryPointCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PointBadge extends StatelessWidget {
+  const _PointBadge({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2.5),
+          boxShadow: const [BoxShadow(blurRadius: 5, color: Colors.black26)],
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
+      );
 }
 
 class _DriverActions extends ConsumerStatefulWidget {
@@ -325,10 +380,13 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
                 'Entrega el pedido solo si coincide.',
                 style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
-              if (order.paymentMethod == 'efectivo') ...[
-                const SizedBox(height: 8),
-                Text('Cobrar ${formatCop(order.total)} en efectivo', style: theme.textTheme.titleSmall),
-              ],
+              const SizedBox(height: 8),
+              Text(
+                order.isOnlinePayment
+                    ? 'Pagado en línea: no cobres nada al entregar'
+                    : 'Cobrar ${formatCop(order.total)} en efectivo',
+                style: theme.textTheme.titleSmall,
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: _code,

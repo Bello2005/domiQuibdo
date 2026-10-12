@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
@@ -38,9 +39,14 @@ class OrderPolicy
             && $order->restaurant()->where('user_id', $user->id)->exists();
     }
 
-    /** El cliente solo cancela mientras el restaurante no haya confirmado el pedido. */
+    /**
+     * El cliente solo cancela mientras el restaurante no haya confirmado el pedido.
+     * Si ya pagó en línea, la cancelación implica devolución y la gestiona soporte.
+     */
     public function cancel(User $user, Order $order): bool
     {
-        return $user->id === $order->user_id && $order->status === OrderStatus::Pendiente;
+        return $user->id === $order->user_id
+            && $order->status === OrderStatus::Pendiente
+            && $order->payment_status !== PaymentStatus::Aprobado;
     }
 }

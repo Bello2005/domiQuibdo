@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
 import '../../core/models.dart';
-import '../../core/settings.dart';
 import '../../core/widgets/common.dart';
 import '../addresses/address_widgets.dart';
 import 'order_repository.dart';
 import 'order_widgets.dart';
+import 'payment.dart';
 
 class OrderDetailScreen extends ConsumerWidget {
   const OrderDetailScreen({super.key, required this.id});
@@ -18,7 +18,6 @@ class OrderDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final orderAsync = ref.watch(orderDetailProvider(id));
-    final demoMode = ref.watch(demoModeProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text('Pedido #$id')),
@@ -33,6 +32,10 @@ class OrderDetailScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
               children: [
                 StatusHeaderCard(order: order),
+                if (order.isOnlinePayment) ...[
+                  const SizedBox(height: 12),
+                  PaymentCard(order: order),
+                ],
                 if (order.status == OrderStatus.enCamino) ...[
                   const SizedBox(height: 12),
                   FilledButton.icon(
@@ -48,13 +51,10 @@ class OrderDetailScreen extends ConsumerWidget {
                     delivered: order.status == OrderStatus.entregado,
                   ),
                 ],
-                if (order.status == OrderStatus.pendiente) ...[
+                // Pagado en línea, cancelar implica devolución: lo gestiona soporte.
+                if (order.status == OrderStatus.pendiente && order.paymentStatus != PaymentStatus.aprobado) ...[
                   const SizedBox(height: 12),
                   _CancelButton(orderId: order.id),
-                ],
-                if (demoMode && order.status.isActive) ...[
-                  const SizedBox(height: 12),
-                  _DemoPanel(order: order),
                 ],
                 if (order.repartidor != null) ...[
                   const SizedBox(height: 12),
@@ -127,76 +127,4 @@ class _CancelButtonState extends ConsumerState<_CancelButton> {
         icon: const Icon(Icons.cancel_outlined),
         label: const Text('Cancelar pedido'),
       );
-}
-
-/// Controles solo para la presentación (se ocultan desactivando "Modo demo" en Perfil).
-class _DemoPanel extends ConsumerStatefulWidget {
-  const _DemoPanel({required this.order});
-
-  final Order order;
-
-  @override
-  ConsumerState<_DemoPanel> createState() => _DemoPanelState();
-}
-
-class _DemoPanelState extends ConsumerState<_DemoPanel> {
-  bool _busy = false;
-
-  Future<void> _advance() async {
-    setState(() => _busy = true);
-    try {
-      final updated = await ref.read(orderRepositoryProvider).demoAdvance(widget.order.id);
-      ref
-        ..invalidate(orderDetailProvider(widget.order.id))
-        ..invalidate(ordersProvider);
-      if (mounted && updated.status == OrderStatus.enCamino) {
-        context.push('/orders/${updated.id}/tracking');
-      }
-    } on ApiException catch (e) {
-      if (mounted) showMessage(context, e.message);
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final next = widget.order.status.next;
-    final canAdvance = next != null && next != OrderStatus.entregado;
-
-    return Card(
-      color: theme.colorScheme.surfaceContainerLow,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.science_outlined, color: theme.colorScheme.secondary),
-                const SizedBox(width: 8),
-                Text('Modo demo', style: theme.textTheme.titleSmall),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              canAdvance
-                  ? 'Simula que el restaurante y el repartidor avanzan tu pedido.'
-                  : 'Para entregar: inicia sesión como repartidor (repartidor@demo.co) e ingresa el código.',
-              style: theme.textTheme.bodySmall,
-            ),
-            if (canAdvance) ...[
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _busy ? null : _advance,
-                icon: const Icon(Icons.skip_next),
-                label: Text('Pasar a "${next.label}"'),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 }

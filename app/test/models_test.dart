@@ -58,4 +58,48 @@ void main() {
       expect(user.isDriver, isFalse);
     });
   });
+
+  group('Order · pago en línea', () {
+    Order order({required String method, String? paymentStatus, String status = 'pendiente'}) => Order.fromJson({
+          'id': 7,
+          'status': status,
+          'subtotal': 10000,
+          'delivery_fee': 4000,
+          'total': 14000,
+          'payment_method': method,
+          'payment_status': paymentStatus,
+          'created_at': '2026-10-12T12:00:00-05:00',
+        });
+
+    test('PayU pendiente o rechazado espera pago y se puede pagar', () {
+      expect(order(method: 'payu', paymentStatus: 'pendiente').isAwaitingPayment, isTrue);
+      expect(order(method: 'payu', paymentStatus: 'pendiente').canPayOnline, isTrue);
+      expect(order(method: 'payu', paymentStatus: 'rechazado').canPayOnline, isTrue);
+    });
+
+    test('el título pide el pago mientras falte pagar', () {
+      expect(order(method: 'payu', paymentStatus: 'pendiente').headline, 'Esperando tu pago');
+      expect(order(method: 'payu', paymentStatus: 'aprobado').headline, 'Esperando confirmación del restaurante');
+      expect(order(method: 'efectivo').headline, 'Esperando confirmación del restaurante');
+    });
+
+    test('aprobado ya no espera pago', () {
+      final paid = order(method: 'payu', paymentStatus: 'aprobado');
+      expect(paid.paymentStatus, PaymentStatus.aprobado);
+      expect(paid.isAwaitingPayment, isFalse);
+      expect(paid.canPayOnline, isFalse);
+    });
+
+    test('expirado o pedido cancelado no se puede pagar', () {
+      expect(order(method: 'payu', paymentStatus: 'expirado', status: 'cancelado').canPayOnline, isFalse);
+      expect(order(method: 'payu', paymentStatus: 'pendiente', status: 'cancelado').canPayOnline, isFalse);
+    });
+
+    test('efectivo no tiene estado de pago', () {
+      final cash = order(method: 'efectivo');
+      expect(cash.paymentStatus, isNull);
+      expect(cash.isOnlinePayment, isFalse);
+      expect(cash.isAwaitingPayment, isFalse);
+    });
+  });
 }

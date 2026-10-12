@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- El servicio de GPS (geolocator, enableWakeLock) mantiene la CPU activa; sin esto Android bloquea el envío -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <application
         android:label="DomiQuibdó"
         android:name="${applicationName}"
@@ -60,5 +62,9 @@
             <data android:scheme="tel"/>
         </intent>
         <package android:name="com.whatsapp"/>
+        <!-- Checkout de PayU dentro de la app con Custom Tabs -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService"/>
+        </intent>
     </queries>
 </manifest>

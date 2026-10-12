@@ -31,9 +31,11 @@ class RestaurantSeeder extends Seeder
             }
         }
 
-        // La cuenta demo de restaurante administra Pollos Nacho (el del pedido demo).
-        Restaurant::where('name', 'Pollos Nacho')
-            ->update(['user_id' => User::where('email', 'restaurante@demo.co')->value('id')]);
+        // En local y tests, la cuenta de prueba de restaurante administra Pollos Nacho.
+        $testOwner = User::where('email', 'restaurante@demo.co')->value('id');
+        if ($testOwner) {
+            Restaurant::where('name', 'Pollos Nacho')->update(['user_id' => $testOwner]);
+        }
     }
 
     /**

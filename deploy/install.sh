@@ -56,7 +56,6 @@ APP_KEY=base64:$(openssl rand -base64 32)
 DB_DATABASE=domiquibdo
 DB_USERNAME=domiquibdo
 DB_PASSWORD=$(openssl rand -hex 24)
-APP_DEMO=true
 PHP_WORKERS=4
 ENV
 fi

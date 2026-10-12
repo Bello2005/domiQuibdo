@@ -13,7 +13,6 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final demoMode = ref.watch(demoModeProvider);
     final themeMode = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -99,14 +98,6 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                  ),
-                  const Divider(height: 1),
-                  SwitchListTile(
-                    secondary: const Icon(Icons.science_outlined),
-                    title: const Text('Modo demo'),
-                    subtitle: const Text('Muestra controles para simular el avance de los pedidos.'),
-                    value: demoMode,
-                    onChanged: ref.read(demoModeProvider.notifier).set,
                   ),
                 ],
               ),

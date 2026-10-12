@@ -103,6 +103,8 @@ export interface Order {
   delivery_fee: number
   total: number
   payment_method: string
+  payment_status: 'pendiente' | 'aprobado' | 'rechazado' | 'expirado' | null
+  payment_status_label: string | null
   notes: string | null
   created_at: string | null
   restaurant?: Restaurant

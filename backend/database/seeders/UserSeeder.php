@@ -11,7 +11,7 @@ use Illuminate\Database\Seeder;
 class UserSeeder extends Seeder
 {
     /**
-     * Cuentas de demostración. Contraseña para todas: "password".
+     * Cuentas de prueba para desarrollo local y tests (nunca en producción). Contraseña: "password".
      */
     public function run(): void
     {

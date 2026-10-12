@@ -13,8 +13,6 @@ services:
         value: false
       - key: APP_KEY
         sync: false
-      - key: APP_DEMO
-        value: true
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST

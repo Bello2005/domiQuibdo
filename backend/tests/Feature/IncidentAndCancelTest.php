@@ -96,14 +96,4 @@ class IncidentAndCancelTest extends TestCase
         $this->postJson("/api/orders/{$order->id}/cancel")->assertForbidden();
         $this->assertSame(OrderStatus::Pendiente, $order->fresh()->status);
     }
-
-    public function test_seed_command_links_restaurant_owner_on_existing_database(): void
-    {
-        \App\Models\Restaurant::where('name', 'Pollos Nacho')->update(['user_id' => null]);
-
-        $this->artisan('demo:seed-once')->assertSuccessful();
-
-        $owner = User::where('email', 'restaurante@demo.co')->value('id');
-        $this->assertSame($owner, \App\Models\Restaurant::where('name', 'Pollos Nacho')->value('user_id'));
-    }
 }

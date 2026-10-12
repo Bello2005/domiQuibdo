@@ -210,11 +210,30 @@ enum OrderStatus {
   bool get isActive => this != entregado && this != cancelado;
 }
 
+/// Métodos que se ofrecen al pagar un pedido nuevo.
+const checkoutPaymentMethods = ['efectivo', 'payu'];
+
+/// Etiqueta e ícono por método (incluye los de pedidos antiguos para mostrarlos bien).
 const paymentMethods = {
-  'efectivo': ('Efectivo', Icons.payments_outlined),
+  'efectivo': ('Efectivo al recibir', Icons.payments_outlined),
+  'payu': ('Pago en línea · PayU', Icons.credit_card),
   'transferencia': ('Transferencia', Icons.account_balance_outlined),
   'nequi': ('Nequi', Icons.phone_iphone),
 };
+
+/// Estado del pago en línea. Los pedidos en efectivo no tienen.
+enum PaymentStatus {
+  pendiente('Pago pendiente'),
+  aprobado('Pagado'),
+  rechazado('Pago rechazado'),
+  expirado('Pago expirado');
+
+  const PaymentStatus(this.label);
+
+  final String label;
+
+  static PaymentStatus? maybeParse(Object? value) => PaymentStatus.values.where((s) => s.name == value).firstOrNull;
+}
 
 class OrderItem {
   const OrderItem({required this.name, required this.quantity, required this.unitPrice, required this.subtotal});
@@ -280,6 +299,7 @@ class Order {
     required this.total,
     required this.paymentMethod,
     required this.createdAt,
+    this.paymentStatus,
     this.notes,
     this.verificationCode,
     this.restaurant,
@@ -297,6 +317,7 @@ class Order {
         deliveryFee: _toDouble(json['delivery_fee']),
         total: _toDouble(json['total']),
         paymentMethod: json['payment_method'] as String,
+        paymentStatus: PaymentStatus.maybeParse(json['payment_status']),
         notes: json['notes'] as String?,
         verificationCode: json['verification_code'] as String?,
         createdAt: DateTime.parse(json['created_at'] as String),
@@ -319,6 +340,7 @@ class Order {
   final double deliveryFee;
   final double total;
   final String paymentMethod;
+  final PaymentStatus? paymentStatus;
   final String? notes;
   final String? verificationCode;
   final DateTime createdAt;
@@ -330,4 +352,17 @@ class Order {
   final Contact? customer;
 
   String get paymentLabel => paymentMethods[paymentMethod]?.$1 ?? paymentMethod;
+
+  bool get isOnlinePayment => paymentMethod == 'payu';
+
+  /// Pagado en línea pero sin aprobación de PayU: el restaurante aún no lo prepara.
+  bool get isAwaitingPayment => isOnlinePayment && paymentStatus != PaymentStatus.aprobado;
+
+  /// Título del estado: mientras falte el pago en línea, eso es lo que espera el pedido.
+  String get headline =>
+      status == OrderStatus.pendiente && canPayOnline ? 'Esperando tu pago' : status.headline;
+
+  /// Se puede (re)intentar pagar: pendiente o rechazado, con el pedido aún activo.
+  bool get canPayOnline =>
+      isAwaitingPayment && paymentStatus != PaymentStatus.expirado && status.isActive;
 }

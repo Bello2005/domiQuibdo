@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\MenuItem;
 use App\Models\Order;
@@ -13,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 final class OrderService
 {
-    public function __construct(private readonly MockRouteService $routes) {}
+    public function __construct(private readonly DeliveryRouteService $routes) {}
 
     /**
      * Crea un pedido. Precios y total se calculan aquí desde la base de datos:
@@ -66,14 +67,27 @@ final class OrderService
                 'total' => $lines->sum('subtotal') + $fee,
                 'delivery_fee' => $fee,
                 'payment_method' => $data['payment_method'],
+                'payment_status' => $data['payment_method'] === 'payu' ? PaymentStatus::Pendiente : null,
                 'notes' => $data['notes'] ?? null,
             ]);
+
+            if ($order->payment_method === 'payu') {
+                $order->update(['payment_reference' => PayuService::newReference($order)]);
+            }
 
             $order->items()->createMany($lines->all());
             $this->routes->generate($order);
 
             return $order;
         });
+    }
+
+    /** Un pedido pagado en línea no avanza hasta que PayU apruebe el pago (cancelarlo sí se puede). */
+    public static function ensurePaymentAllows(Order $order, OrderStatus $target): void
+    {
+        if ($target !== OrderStatus::Cancelado && $order->isAwaitingPayment()) {
+            throw ValidationException::withMessages(['status' => 'El pedido todavía no está pagado.']);
+        }
     }
 
     /** Código de 4 dígitos que el cliente entrega al repartidor al recibir. */

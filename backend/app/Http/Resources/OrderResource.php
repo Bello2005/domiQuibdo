@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Order */
+/** @mixin Order */
 class OrderResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -20,6 +21,9 @@ class OrderResource extends JsonResource
             'delivery_fee' => $this->delivery_fee,
             'total' => $this->total,
             'payment_method' => $this->payment_method,
+            'payment_status' => $this->payment_status?->value,
+            'payment_status_label' => $this->payment_status?->label(),
+            'paid_at' => $this->paid_at?->toIso8601String(),
             'notes' => $this->notes,
             // Seguridad: solo el cliente dueño ve el código; el repartidor debe pedírselo en la puerta.
             'verification_code' => $this->when($isOwner, fn () => $this->verification_code),

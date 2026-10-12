@@ -10,15 +10,18 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Catálogo (zonas, restaurantes y menús) en todos los entornos. Las cuentas de prueba
+     * (contraseña "password") y su pedido solo existen en local y en los tests: nunca en producción.
      */
     public function run(): void
     {
-        $this->call([
+        $withTestAccounts = app()->environment(['local', 'testing']);
+
+        $this->call(array_values(array_filter([
             CoverageZoneSeeder::class,
-            UserSeeder::class,
+            $withTestAccounts ? UserSeeder::class : null,
             RestaurantSeeder::class,
-            DemoOrderSeeder::class,
-        ]);
+            $withTestAccounts ? DemoOrderSeeder::class : null,
+        ])));
     }
 }

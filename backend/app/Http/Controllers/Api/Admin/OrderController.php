@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\OrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Services\OrderService;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class OrderController extends Controller
@@ -22,7 +23,10 @@ class OrderController extends Controller
     {
         $data = $request->validated();
 
-        $order->status = OrderStatus::from($data['status']);
+        $status = OrderStatus::from($data['status']);
+        OrderService::ensurePaymentAllows($order, $status);
+
+        $order->status = $status;
         if (array_key_exists('repartidor_id', $data)) {
             $order->repartidor_id = $data['repartidor_id'];
         }

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Restaurant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -44,7 +45,58 @@ class OrderTest extends TestCase
         $this->assertGreaterThanOrEqual(3000, $fee);
         $this->assertMatchesRegularExpression('/^\d{4}$/', $response->json('verification_code'));
         $this->assertSame('pendiente', $response->json('status'));
-        $this->assertSame(6, Order::find($response->json('id'))->routePoints()->count());
+    }
+
+    /** Sin servidor de rutas configurado, el recorrido es la línea recta restaurante → entrega. */
+    public function test_route_falls_back_to_straight_line_between_restaurant_and_address(): void
+    {
+        $order = $this->placeOrder();
+
+        $route = $this->getJson("/api/orders/{$order->id}/route")->assertOk()->json();
+
+        $this->assertCount(2, $route);
+        $this->assertEqualsWithDelta($order->restaurant->latitude, $route[0]['latitude'], 1e-6);
+        $this->assertEqualsWithDelta($order->address->longitude, $route[1]['longitude'], 1e-6);
+    }
+
+    public function test_route_follows_streets_when_routing_server_answers(): void
+    {
+        config(['domi.routing_url' => 'https://osrm.test']);
+        Http::fake(['osrm.test/*' => Http::response([
+            'code' => 'Ok',
+            'routes' => [['geometry' => ['coordinates' => [[-76.661, 5.691], [-76.660, 5.693], [-76.6588, 5.6948]]]]],
+        ])]);
+
+        $order = $this->placeOrder();
+
+        $route = $this->getJson("/api/orders/{$order->id}/route")->assertOk()->json();
+        $this->assertCount(3, $route);
+        $this->assertEqualsWithDelta(5.693, $route[1]['latitude'], 1e-6);
+        $this->assertEqualsWithDelta(-76.660, $route[1]['longitude'], 1e-6);
+    }
+
+    public function test_order_is_still_placed_when_routing_server_fails(): void
+    {
+        config(['domi.routing_url' => 'https://osrm.test']);
+        Http::fake(['osrm.test/*' => Http::response('error', 500)]);
+
+        $order = $this->placeOrder();
+
+        $this->assertSame(2, $order->routePoints()->count());
+    }
+
+    private function placeOrder(): Order
+    {
+        $cliente = $this->cliente();
+        Sanctum::actingAs($cliente);
+
+        $id = $this->postJson('/api/orders', [
+            'address_id' => $cliente->addresses()->value('id'),
+            'items' => [['menu_item_id' => $this->menuOf('Pollos Nacho')->id, 'quantity' => 1]],
+            'payment_method' => 'efectivo',
+        ])->assertCreated()->json('id');
+
+        return Order::with(['restaurant', 'address'])->find($id);
     }
 
     public function test_items_from_different_restaurants_are_rejected(): void

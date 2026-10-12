@@ -12,9 +12,8 @@ import '../safety/share_location.dart';
 import '../safety/sos_sheet.dart';
 import 'order_repository.dart';
 
-/// Tracking del pedido. Con GPS real (el repartidor reporta su posición) el marcador sigue esa
-/// posición y el ETA lo calcula el servidor. Mientras no haya ninguna posición real, se usa el
-/// respaldo simulado: el marcador recorre `delivery_mock_route` un punto cada [AppConfig.mockStepDuration].
+/// Tracking del pedido: ruta por calles restaurante → entrega y la posición real que reporta el
+/// repartidor por GPS. Mientras no haya una posición, el mapa lo dice en vez de simular el recorrido.
 class TrackingScreen extends ConsumerStatefulWidget {
   const TrackingScreen({super.key, required this.orderId});
 
@@ -24,36 +23,8 @@ class TrackingScreen extends ConsumerStatefulWidget {
   ConsumerState<TrackingScreen> createState() => _TrackingScreenState();
 }
 
-class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTickerProviderStateMixin {
-  AnimationController? _progress;
+class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   bool _deliveredShown = false;
-
-  @override
-  void dispose() {
-    _progress?.dispose();
-    super.dispose();
-  }
-
-  void _startAnimation(List<LatLng> route) {
-    if (_progress != null || route.length < 2) return;
-    _progress = AnimationController(vsync: this, duration: AppConfig.mockStepDuration * (route.length - 1))
-      ..addStatusListener((status) {
-        if (status == AnimationStatus.completed && mounted) setState(() {});
-      })
-      ..forward();
-  }
-
-  /// Posición interpolada sobre la ruta para que el movimiento sea fluido.
-  LatLng _positionAt(List<LatLng> route, double t) {
-    if (route.length < 2) return route.first;
-    final segments = route.length - 1;
-    final scaled = t * segments;
-    final i = scaled.floor().clamp(0, segments - 1);
-    final f = scaled - i;
-    final a = route[i];
-    final b = route[i + 1];
-    return LatLng(a.latitude + (b.latitude - a.latitude) * f, a.longitude + (b.longitude - a.longitude) * f);
-  }
 
   Future<void> _showDelivered() async {
     await showDialog<void>(
@@ -73,7 +44,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
     final orderAsync = ref.watch(orderDetailProvider(widget.orderId));
     final routeAsync = ref.watch(orderRouteProvider(widget.orderId));
     final courier = ref.watch(courierPositionProvider(widget.orderId)).valueOrNull;
-    final livePosition = courier?.position;
+    final courierAt = courier?.position;
 
     ref.listen(orderDetailProvider(widget.orderId), (_, next) {
       final order = next.valueOrNull;
@@ -86,7 +57,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
     final order = orderAsync.valueOrNull;
     final route = routeAsync.valueOrNull;
 
-    if (order == null || route == null || route.isEmpty) {
+    if (order == null || route == null) {
       final error = orderAsync.error ?? routeAsync.error;
       return Scaffold(
         appBar: AppBar(),
@@ -96,13 +67,10 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
       );
     }
 
-    _startAnimation(route);
-    final progress = _progress ?? const AlwaysStoppedAnimation(1.0);
     final scheme = Theme.of(context).colorScheme;
     final restaurant = order.restaurant!;
     final destination = order.address!;
-    // Posición del repartidor: real si el servidor tiene alguna; si no, la simulada.
-    LatLng courierAt() => livePosition ?? _positionAt(route, progress.value);
+    final arrived = courier?.hasFix == true && courier!.hasArrived;
 
     return Scaffold(
       body: PeriodicRefresh(
@@ -116,34 +84,18 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
             FlutterMap(
               options: MapOptions(
                 initialCameraFit: CameraFit.coordinates(
-                  coordinates: [restaurant.position, destination.position, ...route],
+                  coordinates: [restaurant.position, destination.position, ...route, ?courierAt],
                   padding: const EdgeInsets.fromLTRB(56, 140, 56, 320),
                   maxZoom: 17,
                 ),
               ),
               children: [
                 TileLayer(urlTemplate: AppConfig.osmTileUrl, userAgentPackageName: AppConfig.osmUserAgent),
-                PolylineLayer(
-                  polylines: [
-                    Polyline(points: route, strokeWidth: 6, color: scheme.primary.withValues(alpha: 0.3)),
-                  ],
-                ),
-                if (livePosition == null)
-                  AnimatedBuilder(
-                    animation: progress,
-                    builder: (context, _) {
-                      final t = progress.value;
-                      final passed = (t * (route.length - 1)).floor() + 1;
-                      return PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: [...route.take(passed), _positionAt(route, t)],
-                            strokeWidth: 6,
-                            color: scheme.primary,
-                          ),
-                        ],
-                      );
-                    },
+                if (route.length >= 2)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(points: route, strokeWidth: 6, color: scheme.primary.withValues(alpha: 0.45)),
+                    ],
                   ),
                 MarkerLayer(
                   markers: [
@@ -159,20 +111,9 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                       height: 44,
                       child: _MapBadge(icon: destination.tipo.icon, color: AppColors.borojo),
                     ),
+                    if (courierAt != null)
+                      Marker(point: courierAt, width: 56, height: 56, child: _CourierMarker(color: scheme.primary)),
                   ],
-                ),
-                AnimatedBuilder(
-                  animation: progress,
-                  builder: (context, _) => MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: courierAt(),
-                        width: 56,
-                        height: 56,
-                        child: _CourierMarker(color: scheme.primary),
-                      ),
-                    ],
-                  ),
                 ),
                 const SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
               ],
@@ -187,16 +128,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                       icon: const Icon(Icons.arrow_back),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: AnimatedBuilder(
-                        animation: progress,
-                        builder: (context, _) => _EtaPill(
-                          progress: progress.value,
-                          steps: route.length - 1,
-                          courier: courier?.hasFix == true ? courier : null,
-                        ),
-                      ),
-                    ),
+                    Expanded(child: _EtaPill(courier: courier)),
                     const SizedBox(width: 8),
                     FilledButton.icon(
                       style: FilledButton.styleFrom(
@@ -207,7 +139,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                       onPressed: () => showSosSheet(
                         context,
                         orderId: order.id,
-                        shareMessage: trackingShareMessage(order: order, position: courierAt()),
+                        shareMessage: trackingShareMessage(order: order, position: courierAt),
                       ),
                       icon: const Icon(Icons.sos),
                       label: const Text('SOS'),
@@ -223,11 +155,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
                   constraints: const BoxConstraints(maxWidth: 560),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    child: _TrackingPanel(
-                      order: order,
-                      arrived: courier?.hasFix == true ? courier!.hasArrived : progress.isCompleted,
-                      currentPosition: courierAt,
-                    ),
+                    child: _TrackingPanel(order: order, arrived: arrived, courierPosition: courierAt),
                   ),
                 ),
               ),
@@ -240,22 +168,22 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> with SingleTick
 }
 
 class _EtaPill extends StatelessWidget {
-  const _EtaPill({required this.progress, required this.steps, this.courier});
+  const _EtaPill({this.courier});
 
-  final double progress;
-  final int steps;
-
-  /// Posición real del repartidor; null mientras se usa la ruta simulada.
+  /// Última posición conocida del repartidor (null mientras carga).
   final CourierPosition? courier;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final real = courier;
-    final arrived = real == null ? progress >= 1 : real.hasArrived;
-    // Con GPS real el ETA viene del servidor; si no, simulado (~2 min por tramo de la ruta).
-    final minutes = real == null ? ((1 - progress) * steps * 2).ceil() : (real.etaMin ?? 1);
-    final noSignal = real != null && !real.live;
+
+    final (icon, text) = switch (real) {
+      CourierPosition(hasFix: true, hasArrived: true) => (Icons.where_to_vote, 'Tu repartidor llegó'),
+      CourierPosition(hasFix: true, live: true) => (Icons.two_wheeler, 'En camino · llega en ~${real.etaMin ?? 1} min'),
+      CourierPosition(hasFix: true) => (Icons.gps_not_fixed, 'Buscando señal del repartidor…'),
+      _ => (Icons.hourglass_top, 'Esperando la ubicación del repartidor…'),
+    };
 
     return Material(
       elevation: 3,
@@ -265,18 +193,10 @@ class _EtaPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(arrived ? Icons.where_to_vote : Icons.two_wheeler, color: theme.colorScheme.primary),
+            Icon(icon, color: theme.colorScheme.primary),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                arrived
-                    ? 'Tu repartidor llegó'
-                    : noSignal
-                        ? 'Buscando señal del repartidor…'
-                        : 'En camino · llega en ~$minutes min',
-                style: theme.textTheme.titleSmall,
-                overflow: TextOverflow.ellipsis,
-              ),
+              child: Text(text, style: theme.textTheme.titleSmall, overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
@@ -286,11 +206,11 @@ class _EtaPill extends StatelessWidget {
 }
 
 class _TrackingPanel extends StatelessWidget {
-  const _TrackingPanel({required this.order, required this.arrived, required this.currentPosition});
+  const _TrackingPanel({required this.order, required this.arrived, this.courierPosition});
 
   final Order order;
   final bool arrived;
-  final LatLng Function() currentPosition;
+  final LatLng? courierPosition;
 
   @override
   Widget build(BuildContext context) {
@@ -346,7 +266,7 @@ class _TrackingPanel extends StatelessWidget {
                   child: FilledButton.tonalIcon(
                     onPressed: () => shareViaWhatsApp(
                       context,
-                      trackingShareMessage(order: order, position: currentPosition()),
+                      trackingShareMessage(order: order, position: courierPosition),
                     ),
                     icon: const Icon(Icons.share_location),
                     label: const Text('Compartir por WhatsApp'),
@@ -355,7 +275,7 @@ class _TrackingPanel extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton.outlined(
                   tooltip: 'Más opciones',
-                  onPressed: () => shareWithSystem(trackingShareMessage(order: order, position: currentPosition())),
+                  onPressed: () => shareWithSystem(trackingShareMessage(order: order, position: courierPosition)),
                   icon: const Icon(Icons.ios_share),
                 ),
               ],

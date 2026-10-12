@@ -92,12 +92,24 @@ class DeliveryTest extends TestCase
         $this->getJson('/api/driver/orders')->assertForbidden();
     }
 
-    public function test_demo_advance_cannot_skip_code_validation(): void
+    /** Regresión: los envíos de GPS no deben gastar los intentos del código de entrega. */
+    public function test_location_reports_do_not_consume_delivery_attempts(): void
     {
         $order = $this->order();
-        Sanctum::actingAs(User::where('email', 'cliente@demo.co')->first());
+        $this->actingAsDriver();
 
-        $this->postJson("/api/demo/orders/{$order->id}/advance")->assertUnprocessable();
-        $this->assertSame(OrderStatus::EnCamino, $order->fresh()->status);
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson("/api/driver/orders/{$order->id}/location", ['latitude' => 5.6950, 'longitude' => -76.6590])
+                ->assertCreated();
+        }
+
+        $this->postJson("/api/driver/orders/{$order->id}/deliver", ['code' => $order->verification_code])
+            ->assertOk()
+            ->assertJsonPath('status', 'entregado');
+    }
+
+    public function test_unauthenticated_api_requests_get_json_401(): void
+    {
+        $this->get('/api/orders')->assertUnauthorized()->assertJsonStructure(['message']);
     }
 }

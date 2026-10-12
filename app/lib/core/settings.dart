@@ -9,20 +9,6 @@ final sharedPreferencesProvider = Provider<SharedPreferences>(
   (ref) => throw UnimplementedError('sharedPreferencesProvider no fue inicializado'),
 );
 
-class DemoModeController extends Notifier<bool> {
-  static const _key = 'demo_mode';
-
-  @override
-  bool build() => ref.watch(sharedPreferencesProvider).getBool(_key) ?? true;
-
-  void set(bool enabled) {
-    ref.read(sharedPreferencesProvider).setBool(_key, enabled);
-    state = enabled;
-  }
-}
-
-final demoModeProvider = NotifierProvider<DemoModeController, bool>(DemoModeController.new);
-
 class ThemeModeController extends Notifier<ThemeMode> {
   static const _key = 'theme_mode';
 

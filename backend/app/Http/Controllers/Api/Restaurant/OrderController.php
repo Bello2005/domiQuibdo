@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
@@ -37,6 +38,7 @@ class OrderController extends Controller
         if ($next === null || $next === OrderStatus::Entregado) {
             throw ValidationException::withMessages(['status' => 'Este pedido ya no se puede avanzar.']);
         }
+        OrderService::ensurePaymentAllows($order, $next);
 
         $order->status = $next;
         $order->save();
