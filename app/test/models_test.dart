@@ -1,3 +1,4 @@
+import 'package:domiquibdo/core/format.dart';
 import 'package:domiquibdo/core/models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -110,4 +111,13 @@ void main() {
       expect(cash.isAwaitingPayment, isFalse);
     });
   });
+
+  group('formatDistance', () {
+    test('metros por debajo del kilómetro y kilómetros con coma', () {
+      expect(formatDistance(80), '80 m');
+      expect(formatDistance(999), '999 m');
+      expect(formatDistance(1200), '1,2 km');
+    });
+  });
 }
+

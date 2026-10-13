@@ -112,6 +112,9 @@ class _LocationSharingState extends ConsumerState<_LocationSharing> {
   LocationAccess? _access;
   bool _sending = false;
   bool _lastSendFailed = false;
+
+  /// Motivo que dio el servidor al rechazar la posición (por ejemplo, estar fuera de Quibdó).
+  String? _rejection;
   DateTime? _lastSent;
 
   @override
@@ -151,10 +154,17 @@ class _LocationSharingState extends ConsumerState<_LocationSharing> {
         setState(() {
           _lastSent = DateTime.now();
           _lastSendFailed = false;
+          _rejection = null;
         });
       }
-    } on ApiException {
-      if (mounted) setState(() => _lastSendFailed = true);
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() {
+          _lastSendFailed = true;
+          // 422: el servidor entendió la posición y la rechazó; no es un problema de conexión.
+          _rejection = e.statusCode == 422 ? e.message : null;
+        });
+      }
     } finally {
       _sending = false;
     }
@@ -173,6 +183,7 @@ class _LocationSharingState extends ConsumerState<_LocationSharing> {
           'El permiso de ubicación está bloqueado. Actívalo en los ajustes del celular.',
           false,
         ),
+      LocationAccess.granted when _rejection != null => (Icons.wrong_location_outlined, _rejection!, false),
       LocationAccess.granted when _lastSendFailed => (Icons.sync_problem, 'Sin conexión: reintentando enviar tu ubicación…', false),
       LocationAccess.granted when _lastSent == null => (Icons.gps_not_fixed, 'Buscando señal GPS…', true),
       LocationAccess.granted => (Icons.gps_fixed, 'Compartiendo tu ubicación en vivo con el cliente.', true),
@@ -368,6 +379,12 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
     }
 
     if (order.status == OrderStatus.enCamino) {
+      // El código solo se pide en la puerta: antes, el repartidor ve cuánto le falta para llegar.
+      final courier = ref.watch(courierPositionProvider(order.id)).valueOrNull;
+      final atDelivery = courier != null && courier.hasFix && courier.live && courier.hasArrived;
+      if (!atDelivery) {
+        return _NotYetAtDelivery(courier: courier);
+      }
       return GlassCard(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -422,7 +439,10 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
         FilledButton.icon(
           onPressed: _busy
               ? null
-              : () => _run(() => ref.read(orderRepositoryProvider).driverAdvance(order.id)),
+              : () => _run(() async {
+                    final position = await LocationService.current();
+                    await ref.read(orderRepositoryProvider).driverAdvance(order.id, position: position);
+                  }),
           icon: Icon(next.icon),
           label: Text('Marcar como "${next.label}"'),
         ),
@@ -431,6 +451,57 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
           Text(_error!, style: TextStyle(color: scheme.error)),
         ],
       ],
+    );
+  }
+}
+
+/// Se muestra en lugar del campo del código mientras el repartidor no ha llegado a la dirección.
+class _NotYetAtDelivery extends StatelessWidget {
+  const _NotYetAtDelivery({required this.courier});
+
+  final CourierPosition? courier;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final distance = courier?.distanceM;
+    final hasSignal = courier != null && courier!.hasFix && courier!.live;
+
+    final detail = !hasSignal
+        ? 'Esperando tu ubicación…'
+        : distance == null
+            ? 'Sigue hacia la dirección del cliente.'
+            : 'Te faltan ~${formatDistance(distance)} para llegar.';
+
+    return GlassCard(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.primary.withValues(alpha: 0.12)),
+              child: Icon(Icons.lock_clock_outlined, color: scheme.primary),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Validar entrega', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    'El código se pide cuando llegues al punto de entrega. $detail',
+                    style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

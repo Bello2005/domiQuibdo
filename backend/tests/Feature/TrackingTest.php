@@ -55,11 +55,11 @@ class TrackingTest extends TestCase
     {
         $order = $this->order();
         $this->as('repartidor@demo.co');
-        $this->ping($order, ['latitude' => 5.1])->assertCreated();
-        $this->ping($order, ['latitude' => 5.2])->assertCreated();
+        $this->ping($order, ['latitude' => 5.6950])->assertCreated();
+        $this->ping($order, ['latitude' => 5.6960])->assertCreated();
 
         $this->as('cliente@demo.co');
-        $this->getJson("/api/orders/{$order->id}/location")->assertJsonPath('latitude', 5.2);
+        $this->getJson("/api/orders/{$order->id}/location")->assertJsonPath('latitude', 5.696);
     }
 
     public function test_stale_location_is_not_live(): void
@@ -134,6 +134,21 @@ class TrackingTest extends TestCase
         Sanctum::actingAs($other);
 
         $this->ping($order)->assertForbidden();
+    }
+
+    public function test_driver_outside_quibdo_cannot_share_location_or_claim_the_order(): void
+    {
+        $order = $this->order();
+        $order->update(['repartidor_id' => null]);
+        $this->as('repartidor@demo.co');
+
+        // Beijing.
+        $this->ping($order, ['latitude' => 39.9042, 'longitude' => 116.4074])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('latitude');
+
+        $this->assertNull($order->fresh()->repartidor_id);
+        $this->assertSame(0, $order->courierLocations()->count());
     }
 
     public function test_invalid_coordinates_are_rejected(): void

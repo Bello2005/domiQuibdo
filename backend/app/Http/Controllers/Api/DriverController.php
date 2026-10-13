@@ -8,7 +8,9 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Services\CoverageService;
 use App\Services\OrderService;
+use App\Services\TrackingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
@@ -49,6 +51,20 @@ class DriverController extends Controller
 
         OrderService::ensurePaymentAllows($order, $next);
 
+        // Tomar un pedido sin repartidor exige estar en la zona de servicio.
+        if ($order->repartidor_id === null) {
+            $position = $request->validate([
+                'latitude' => ['required', 'numeric', 'between:-90,90'],
+                'longitude' => ['required', 'numeric', 'between:-180,180'],
+            ], ['latitude.required' => 'Activa tu ubicación para tomar el pedido.']);
+
+            if (! CoverageService::insideServiceArea((float) $position['latitude'], (float) $position['longitude'])) {
+                throw ValidationException::withMessages([
+                    'latitude' => 'Estás fuera de la zona de servicio de Quibdó: no puedes tomar este pedido.',
+                ]);
+            }
+        }
+
         $order->repartidor_id ??= $request->user()->id;
         $order->status = $next;
         $order->save();
@@ -56,7 +72,7 @@ class DriverController extends Controller
         return OrderResource::make($order->load(Order::DETAIL_RELATIONS));
     }
 
-    public function deliver(Request $request, Order $order): OrderResource
+    public function deliver(Request $request, Order $order, TrackingService $tracking): OrderResource
     {
         Gate::authorize('deliver', $order);
 
@@ -64,6 +80,14 @@ class DriverController extends Controller
 
         if ($order->status !== OrderStatus::EnCamino) {
             throw ValidationException::withMessages(['code' => 'El pedido debe estar en camino para entregarse.']);
+        }
+
+        // El código solo se valida en la puerta: la última posición reciente debe estar en el punto de entrega.
+        $snapshot = $tracking->snapshot($order->load('address'));
+        if (! $snapshot['live'] || $snapshot['distance_m'] > config('domi.delivery_radius_m')) {
+            throw ValidationException::withMessages([
+                'code' => 'Aún no estás en el punto de entrega. Llega a la dirección del cliente para validar el código.',
+            ]);
         }
 
         if (! hash_equals($order->verification_code, $data['code'])) {

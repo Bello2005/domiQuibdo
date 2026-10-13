@@ -79,7 +79,14 @@ class OrderRepository {
 
   Future<List<Order>> driverOrders() => _orders('driver/orders');
 
-  Future<Order> driverAdvance(int id) => _order(() => _dio.post('driver/orders/$id/advance'));
+  /// Avanza el pedido. Con la posición actual, para que el servidor compruebe que el repartidor
+  /// está en la zona de servicio de Quibdó cuando toma un pedido.
+  Future<Order> driverAdvance(int id, {Position? position}) => _order(
+        () => _dio.post(
+          'driver/orders/$id/advance',
+          data: position == null ? null : {'latitude': position.latitude, 'longitude': position.longitude},
+        ),
+      );
 
   Future<Order> deliver(int id, String code) =>
       _order(() => _dio.post('driver/orders/$id/deliver', data: {'code': code}));

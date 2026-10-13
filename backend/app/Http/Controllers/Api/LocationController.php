@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CourierLocationRequest;
 use App\Models\Order;
+use App\Services\CoverageService;
 use App\Services\TrackingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
@@ -21,6 +22,12 @@ class LocationController extends Controller
 
         if ($order->status !== OrderStatus::EnCamino) {
             throw ValidationException::withMessages(['status' => 'Solo se reporta la ubicación mientras el pedido va en camino.']);
+        }
+
+        if (! CoverageService::insideServiceArea((float) $request->validated('latitude'), (float) $request->validated('longitude'))) {
+            throw ValidationException::withMessages([
+                'latitude' => 'Estás fuera de la zona de servicio de Quibdó: no puedes tomar este pedido.',
+            ]);
         }
 
         // El restaurante entrega el pedido sin asignarlo: el primer repartidor que reporta se lo queda.

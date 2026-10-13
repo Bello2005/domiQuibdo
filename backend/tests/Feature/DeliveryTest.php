@@ -29,6 +29,19 @@ class DeliveryTest extends TestCase
         return $driver;
     }
 
+    /** Pone la última posición del repartidor a `$meters` metros (al norte) de la dirección de entrega. */
+    private function courierNearAddress(Order $order, int $meters = 20, ?int $secondsAgo = 0): void
+    {
+        $address = $order->address;
+
+        $order->courierLocations()->create([
+            'user_id' => $order->repartidor_id,
+            'latitude' => $address->latitude + $meters / 111_000,
+            'longitude' => $address->longitude,
+            'recorded_at' => now()->subSeconds($secondsAgo),
+        ]);
+    }
+
     private function wrongCode(Order $order): string
     {
         return $order->verification_code === '0000' ? '1111' : '0000';
@@ -47,6 +60,7 @@ class DeliveryTest extends TestCase
     {
         $order = $this->order();
         $this->actingAsDriver();
+        $this->courierNearAddress($order);
 
         $this->postJson("/api/driver/orders/{$order->id}/deliver", ['code' => $this->wrongCode($order)])
             ->assertUnprocessable()
@@ -59,6 +73,7 @@ class DeliveryTest extends TestCase
     {
         $order = $this->order();
         $this->actingAsDriver();
+        $this->courierNearAddress($order);
 
         for ($i = 0; $i < 5; $i++) {
             $this->postJson("/api/driver/orders/{$order->id}/deliver", ['code' => $this->wrongCode($order)])
@@ -73,6 +88,7 @@ class DeliveryTest extends TestCase
     {
         $order = $this->order();
         $driver = $this->actingAsDriver();
+        $this->courierNearAddress($order);
 
         $this->postJson("/api/driver/orders/{$order->id}/deliver", ['code' => $order->verification_code])
             ->assertOk()
@@ -80,6 +96,49 @@ class DeliveryTest extends TestCase
 
         $this->assertSame(OrderStatus::Entregado, $order->fresh()->status);
         $this->assertSame($driver->id, $order->fresh()->repartidor_id);
+    }
+
+    public function test_code_is_not_accepted_while_courier_is_far_from_the_address(): void
+    {
+        $order = $this->order();
+        $this->actingAsDriver();
+        $this->courierNearAddress($order, meters: 800);
+
+        $this->postJson("/api/driver/orders/{$order->id}/deliver", ['code' => $order->verification_code])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('code');
+
+        $this->assertSame(OrderStatus::EnCamino, $order->fresh()->status);
+    }
+
+    public function test_code_is_not_accepted_without_a_recent_courier_position(): void
+    {
+        $order = $this->order();
+        $this->actingAsDriver();
+
+        $this->postJson("/api/driver/orders/{$order->id}/deliver", ['code' => $order->verification_code])
+            ->assertUnprocessable();
+
+        $this->courierNearAddress($order, secondsAgo: 600);
+        $this->postJson("/api/driver/orders/{$order->id}/deliver", ['code' => $order->verification_code])
+            ->assertUnprocessable();
+    }
+
+    public function test_driver_cannot_take_an_unassigned_order_from_outside_quibdo(): void
+    {
+        $order = $this->order();
+        $order->update(['repartidor_id' => null, 'status' => OrderStatus::Preparando]);
+        $this->actingAsDriver();
+
+        $this->postJson("/api/driver/orders/{$order->id}/advance")->assertUnprocessable()->assertJsonValidationErrors('latitude');
+        $this->postJson("/api/driver/orders/{$order->id}/advance", ['latitude' => 39.9042, 'longitude' => 116.4074])
+            ->assertUnprocessable();
+
+        $this->assertNull($order->fresh()->repartidor_id);
+
+        $this->postJson("/api/driver/orders/{$order->id}/advance", ['latitude' => 5.6948, 'longitude' => -76.6588])
+            ->assertOk()
+            ->assertJsonPath('status', 'en_camino');
     }
 
     public function test_cliente_cannot_use_driver_endpoints(): void

@@ -23,6 +23,14 @@ final class CoverageService
         return self::EARTH_RADIUS_M * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
+    /** ¿Está el punto dentro de la zona de servicio (Quibdó)? */
+    public static function insideServiceArea(float $lat, float $lng): bool
+    {
+        $area = config('domi.service_area');
+
+        return self::distanceMeters($area['lat'], $area['lng'], $lat, $lng) <= $area['radius_km'] * 1000;
+    }
+
     public static function contains(CoverageZone $zone, float $lat, float $lng): bool
     {
         return self::distanceMeters($zone->center_lat, $zone->center_lng, $lat, $lng) <= $zone->radius_m;
