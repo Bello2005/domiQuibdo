@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,9 +7,11 @@ import '../../core/api_client.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
 import 'order_repository.dart';
+import 'payu_webview_screen.dart';
 
-/// Abre el checkout de PayU (Custom Tab en Android, otra pestaña en web). El estado del pago
-/// lo confirma el servidor con la notificación firmada de PayU; la app solo lo vuelve a consultar.
+/// Abre el checkout de PayU: dentro de la app (WebView) en el teléfono y en otra pestaña en web,
+/// donde no hay WebView. El estado del pago lo confirma el servidor con la notificación firmada
+/// de PayU; la app solo lo vuelve a consultar.
 Future<void> openPayuCheckout(BuildContext context, WidgetRef ref, int orderId) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
   try {
@@ -17,10 +20,22 @@ Future<void> openPayuCheckout(BuildContext context, WidgetRef ref, int orderId) 
       messenger?.showSnackBar(const SnackBar(content: Text('Este pedido ya no tiene un pago pendiente.')));
       return;
     }
-    final opened = await launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView, webOnlyWindowName: '_blank');
-    if (!opened) {
-      messenger?.showSnackBar(const SnackBar(content: Text('No se pudo abrir la pasarela de pago.')));
+    if (kIsWeb) {
+      final opened = await launchUrl(Uri.parse(url), webOnlyWindowName: '_blank');
+      if (!opened) {
+        messenger?.showSnackBar(const SnackBar(content: Text('No se pudo abrir la pasarela de pago.')));
+      }
+      return;
     }
+    if (!context.mounted) {
+      return;
+    }
+    await Navigator.of(context, rootNavigator: true).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => PayuWebViewScreen(url: url, orderId: orderId),
+      ),
+    );
   } on ApiException catch (e) {
     messenger?.showSnackBar(SnackBar(content: Text(e.message)));
   } finally {
@@ -72,25 +87,30 @@ class _PaymentCardState extends ConsumerState<PaymentCard> with WidgetsBindingOb
     final status = order.paymentStatus;
 
     final (icon, text, background, foreground) = switch (status) {
-      PaymentStatus.aprobado => (Icons.verified, 'Pago aprobado por PayU.', scheme.primaryContainer, scheme.onPrimaryContainer),
+      PaymentStatus.aprobado => (
+        Icons.verified,
+        'Pago aprobado por PayU.',
+        scheme.primaryContainer,
+        scheme.onPrimaryContainer,
+      ),
       PaymentStatus.rechazado => (
-          Icons.error_outline,
-          'El pago fue rechazado. Puedes intentarlo de nuevo con otro medio.',
-          scheme.errorContainer,
-          scheme.onErrorContainer,
-        ),
+        Icons.error_outline,
+        'El pago fue rechazado. Puedes intentarlo de nuevo con otro medio.',
+        scheme.errorContainer,
+        scheme.onErrorContainer,
+      ),
       PaymentStatus.expirado => (
-          Icons.timer_off_outlined,
-          'El pago expiró y el pedido se canceló.',
-          scheme.errorContainer,
-          scheme.onErrorContainer,
-        ),
+        Icons.timer_off_outlined,
+        'El pago expiró y el pedido se canceló.',
+        scheme.errorContainer,
+        scheme.onErrorContainer,
+      ),
       _ => (
-          Icons.hourglass_top,
-          'Falta pagar: el restaurante empieza a preparar tu pedido cuando PayU apruebe el pago.',
-          scheme.tertiaryContainer,
-          scheme.onTertiaryContainer,
-        ),
+        Icons.hourglass_top,
+        'Falta pagar: el restaurante empieza a preparar tu pedido cuando PayU apruebe el pago.',
+        scheme.tertiaryContainer,
+        scheme.onTertiaryContainer,
+      ),
     };
 
     return Column(
