@@ -35,10 +35,14 @@ class AddressListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis direcciones')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/addresses/new'),
-        icon: const Icon(Icons.add_location_alt_outlined),
-        label: const Text('Nueva dirección'),
+      // La barra de navegación flota sobre el contenido: el botón se sube para no quedar tapado.
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: bottomBarInset(context)),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push('/addresses/new'),
+          icon: const Icon(Icons.add_location_alt_outlined),
+          label: const Text('Nueva dirección'),
+        ),
       ),
       body: addresses.when(
         loading: () => const Center(child: CircularProgressIndicator()),
