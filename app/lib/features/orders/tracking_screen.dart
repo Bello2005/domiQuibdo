@@ -26,6 +26,36 @@ class TrackingScreen extends ConsumerStatefulWidget {
 
 class _TrackingScreenState extends ConsumerState<TrackingScreen> {
   bool _deliveredShown = false;
+  final _map = MapController();
+
+  /// Última posición del repartidor con la que se encuadró el mapa.
+  LatLng? _framedCourier;
+
+  @override
+  void dispose() {
+    _map.dispose();
+    super.dispose();
+  }
+
+  /// Mantiene a la vista al repartidor y al destino mientras el repartidor avanza.
+  void _followCourier(LatLng courier, LatLng destination) {
+    if (courier == _framedCourier) {
+      return;
+    }
+    _framedCourier = courier;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _map.fitCamera(
+        CameraFit.coordinates(
+          coordinates: [courier, destination],
+          padding: const EdgeInsets.fromLTRB(56, 140, 56, 320),
+          maxZoom: 17,
+        ),
+      );
+    });
+  }
 
   Future<void> _showDelivered() async {
     await showDialog<void>(
@@ -72,6 +102,9 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
     final restaurant = order.restaurant!;
     final destination = order.address!;
     final arrived = courier?.hasFix == true && courier!.hasArrived;
+    if (courierAt != null) {
+      _followCourier(courierAt, destination.position);
+    }
 
     return Scaffold(
       body: PeriodicRefresh(
@@ -83,6 +116,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
         child: Stack(
           children: [
             FlutterMap(
+              mapController: _map,
               options: MapOptions(
                 initialCameraFit: CameraFit.coordinates(
                   coordinates: [restaurant.position, destination.position, ...route, ?courierAt],
@@ -188,7 +222,7 @@ class _EtaPill extends StatelessWidget {
 
     final (icon, text) = switch (real) {
       CourierPosition(hasFix: true, hasArrived: true) => (Icons.where_to_vote, 'Tu repartidor llegó'),
-      CourierPosition(hasFix: true, live: true) => (Icons.two_wheeler, 'En camino · llega en ~${real.etaMin ?? 1} min'),
+      CourierPosition(hasFix: true, live: true) => (Icons.two_wheeler, 'Llega en ~${real.etaMin ?? 1} min'),
       CourierPosition(hasFix: true) => (Icons.gps_not_fixed, 'Buscando señal…'),
       _ => (Icons.hourglass_top, 'Esperando ubicación…'),
     };
