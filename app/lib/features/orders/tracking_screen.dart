@@ -144,15 +144,24 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                       height: 44,
                       child: _MapBadge(icon: destination.tipo.icon, color: AppColors.borojo),
                     ),
-                    if (courierAt != null)
-                      Marker(
-                        point: courierAt,
-                        width: 56,
-                        height: 56,
-                        child: _CourierMarker(color: scheme.primary),
-                      ),
                   ],
                 ),
+                // La moto se desliza hasta cada posición nueva en vez de saltar.
+                if (courierAt != null)
+                  TweenAnimationBuilder<LatLng>(
+                    tween: _LatLngTween(end: courierAt),
+                    duration: _courierGlide,
+                    builder: (context, position, _) => MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: position,
+                          width: 56,
+                          height: 56,
+                          child: _CourierMarker(color: scheme.primary),
+                        ),
+                      ],
+                    ),
+                  ),
                 const SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
               ],
             ),
@@ -242,6 +251,23 @@ class _EtaPill extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Tiempo que tarda la moto en deslizarse a la posición nueva (cerca del intervalo de envío del GPS).
+const _courierGlide = Duration(seconds: 3);
+
+class _LatLngTween extends Tween<LatLng> {
+  _LatLngTween({super.end});
+
+  @override
+  LatLng lerp(double t) {
+    final from = begin ?? end!;
+    final to = end!;
+    return LatLng(
+      from.latitude + (to.latitude - from.latitude) * t,
+      from.longitude + (to.longitude - from.longitude) * t,
     );
   }
 }

@@ -25,7 +25,7 @@ abstract final class LocationService {
     final LocationSettings settings = !kIsWeb && defaultTargetPlatform == TargetPlatform.android
         ? AndroidSettings(
             accuracy: LocationAccuracy.high,
-            intervalDuration: const Duration(seconds: 4),
+            intervalDuration: const Duration(seconds: 3),
             foregroundNotificationConfig: const ForegroundNotificationConfig(
               notificationTitle: 'DomiQuibdó · entrega en curso',
               notificationText: 'Compartiendo tu ubicación con el cliente',

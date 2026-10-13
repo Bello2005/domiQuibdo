@@ -106,7 +106,7 @@ class _LocationSharing extends ConsumerStatefulWidget {
 
 class _LocationSharingState extends ConsumerState<_LocationSharing> {
   /// Mínimo entre envíos al servidor (el GPS puede reportar más seguido).
-  static const _minInterval = Duration(seconds: 4);
+  static const _minInterval = Duration(seconds: 3);
 
   StreamSubscription<Position>? _subscription;
   LocationAccess? _access;
