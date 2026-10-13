@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart' show Position;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +15,7 @@ import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/glass.dart';
 import '../orders/order_repository.dart';
+import 'delivery_confirmation_screen.dart';
 import '../orders/order_widgets.dart';
 import '../safety/share_location.dart';
 import '../safety/sos_sheet.dart';
@@ -320,15 +320,8 @@ class _DriverActions extends ConsumerStatefulWidget {
 }
 
 class _DriverActionsState extends ConsumerState<_DriverActions> {
-  final _code = TextEditingController();
   bool _busy = false;
   String? _error;
-
-  @override
-  void dispose() {
-    _code.dispose();
-    super.dispose();
-  }
 
   void _refresh() {
     ref
@@ -351,18 +344,6 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
     }
   }
 
-  Future<void> _deliver() async {
-    if (_code.text.length != 4) {
-      setState(() => _error = 'Ingresa los 4 dígitos del código.');
-      return;
-    }
-    await _run(() async {
-      await ref.read(orderRepositoryProvider).deliver(widget.order.id, _code.text);
-      if (mounted) showMessage(context, '¡Entrega confirmada con código!');
-    });
-    if (_error != null) _code.clear();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -379,55 +360,7 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
     }
 
     if (order.status == OrderStatus.enCamino) {
-      // El código solo se pide en la puerta: antes, el repartidor ve cuánto le falta para llegar.
-      final courier = ref.watch(courierPositionProvider(order.id)).valueOrNull;
-      final atDelivery = courier != null && courier.hasFix && courier.live && courier.hasArrived;
-      if (!atDelivery) {
-        return _NotYetAtDelivery(courier: courier);
-      }
-      return GlassCard(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('Validar entrega', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 4),
-              Text(
-                'Pídele al cliente el código de 4 dígitos que aparece en su app. '
-                'Entrega el pedido solo si coincide.',
-                style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                order.isOnlinePayment
-                    ? 'Pagado en línea: no cobres nada al entregar'
-                    : 'Cobrar ${formatCop(order.total)} en efectivo',
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _code,
-                keyboardType: TextInputType.number,
-                textAlign: TextAlign.center,
-                maxLength: 4,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: theme.textTheme.headlineMedium?.copyWith(letterSpacing: 16),
-                onSubmitted: (_) => _deliver(),
-                decoration: InputDecoration(counterText: '', hintText: '••••', errorText: _error),
-              ),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy ? null : _deliver,
-                icon: _busy
-                    ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.verified),
-                label: const Text('Validar código y entregar'),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _DeliveryEntryCard(order: order);
     }
 
     final next = order.status.next;
@@ -455,49 +388,65 @@ class _DriverActionsState extends ConsumerState<_DriverActions> {
   }
 }
 
-/// Se muestra en lugar del campo del código mientras el repartidor no ha llegado a la dirección.
-class _NotYetAtDelivery extends StatelessWidget {
-  const _NotYetAtDelivery({required this.courier});
+/// Entrada a la pantalla de confirmación de entrega: dice cuánto falta y abre la vista aparte.
+class _DeliveryEntryCard extends ConsumerWidget {
+  const _DeliveryEntryCard({required this.order});
 
-  final CourierPosition? courier;
+  final Order order;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final courier = ref.watch(courierPositionProvider(order.id)).valueOrNull;
+    final hasSignal = courier != null && courier.hasFix && courier.live;
+    final atDelivery = hasSignal && courier.hasArrived;
     final distance = courier?.distanceM;
-    final hasSignal = courier != null && courier!.hasFix && courier!.live;
 
-    final detail = !hasSignal
-        ? 'Esperando tu ubicación…'
-        : distance == null
-            ? 'Sigue hacia la dirección del cliente.'
-            : 'Te faltan ~${formatDistance(distance)} para llegar.';
+    final detail = atDelivery
+        ? 'Ya estás en el punto de entrega. Pídele el código al cliente.'
+        : !hasSignal
+            ? 'Esperando tu ubicación…'
+            : distance == null
+                ? 'Sigue hacia la dirección del cliente.'
+                : 'Te faltan ~${formatDistance(distance)} para llegar.';
 
     return GlassCard(
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.primary.withValues(alpha: 0.12)),
-              child: Icon(Icons.lock_clock_outlined, color: scheme.primary),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Validar entrega', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 2),
-                  Text(
-                    'El código se pide cuando llegues al punto de entrega. $detail',
-                    style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            Row(
+              children: [
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: scheme.primary.withValues(alpha: 0.12)),
+                  child: Icon(atDelivery ? Icons.lock_open_rounded : Icons.lock_clock_outlined, color: scheme.primary),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Entrega', style: theme.textTheme.titleMedium),
+                      Text(detail, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context, rootNavigator: true).push<bool>(
+                MaterialPageRoute(
+                  fullscreenDialog: true,
+                  builder: (_) => DeliveryConfirmationScreen(orderId: order.id),
+                ),
               ),
+              icon: Icon(atDelivery ? Icons.verified_rounded : Icons.near_me_rounded),
+              label: Text(atDelivery ? 'Confirmar entrega' : 'Ver mi avance a la entrega'),
             ),
           ],
         ),
