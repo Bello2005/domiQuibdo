@@ -121,6 +121,15 @@ final class PayuService
      */
     public function applyState(Order $order, PaymentStatus $status, string $reportedValue, ?string $transactionId): void
     {
+        // Efectivo o PayU, nunca los dos: un pedido en efectivo no cambia por lo que reporte PayU.
+        if ($order->payment_method !== 'payu') {
+            Log::warning('PayU reportó un pago de un pedido que se paga en efectivo: requiere revisión', [
+                'order_id' => $order->id, 'state' => $status->value, 'reported' => $reportedValue,
+            ]);
+
+            return;
+        }
+
         if ($order->payment_status === PaymentStatus::Aprobado) {
             return;
         }

@@ -267,6 +267,19 @@ class PaymentTest extends TestCase
         $this->postJson("/api/restaurant/orders/{$order->id}/advance")->assertOk()->assertJsonPath('status', 'confirmado');
     }
 
+    public function test_payu_report_never_changes_an_order_paid_in_cash(): void
+    {
+        $order = $this->placePayuOrder();
+        $this->postJson("/api/orders/{$order->id}/pay-cash")->assertOk();
+
+        $this->confirm($order, 4)->assertOk();
+
+        $order->refresh();
+        $this->assertSame('efectivo', $order->payment_method);
+        $this->assertNull($order->payment_status);
+        $this->assertNull($order->paid_at);
+    }
+
     public function test_paid_order_cannot_be_switched_to_cash(): void
     {
         $order = $this->placePayuOrder();
