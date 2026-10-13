@@ -358,9 +358,24 @@ class Order {
   /// Pagado en línea pero sin aprobación de PayU: el restaurante aún no lo prepara.
   bool get isAwaitingPayment => isOnlinePayment && paymentStatus != PaymentStatus.aprobado;
 
+  /// ¿El pedido está detenido esperando el pago en línea? (aún sin que el restaurante lo vea).
+  bool get isWaitingForPayment => status == OrderStatus.pendiente && canPayOnline;
+
+  /// Etiqueta corta del estado para listas y distintivos: antes de pagar no dice "Recibido".
+  String get statusLabel => switch ((isWaitingForPayment, paymentStatus)) {
+        (true, PaymentStatus.rechazado) => 'Pago rechazado',
+        (true, _) => 'Por pagar',
+        _ => status.label,
+      };
+
+  IconData get statusIcon => switch ((isWaitingForPayment, paymentStatus)) {
+        (true, PaymentStatus.rechazado) => Icons.error_outline,
+        (true, _) => Icons.credit_card,
+        _ => status.icon,
+      };
+
   /// Título del estado: mientras falte el pago en línea, eso es lo que espera el pedido.
-  String get headline =>
-      status == OrderStatus.pendiente && canPayOnline ? 'Esperando tu pago' : status.headline;
+  String get headline => isWaitingForPayment ? 'Esperando tu pago' : status.headline;
 
   /// Se puede (re)intentar pagar: pendiente o rechazado, con el pedido aún activo.
   bool get canPayOnline =>

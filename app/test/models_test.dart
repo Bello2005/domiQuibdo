@@ -83,6 +83,14 @@ void main() {
       expect(order(method: 'efectivo').headline, 'Esperando confirmación del restaurante');
     });
 
+    test('la etiqueta de la lista no dice "Recibido" mientras falte el pago', () {
+      expect(order(method: 'payu', paymentStatus: 'pendiente').statusLabel, 'Por pagar');
+      expect(order(method: 'payu', paymentStatus: 'rechazado').statusLabel, 'Pago rechazado');
+      expect(order(method: 'payu', paymentStatus: 'aprobado').statusLabel, 'Recibido');
+      expect(order(method: 'efectivo').statusLabel, 'Recibido');
+      expect(order(method: 'payu', paymentStatus: 'pendiente', status: 'cancelado').statusLabel, 'Cancelado');
+    });
+
     test('aprobado ya no espera pago', () {
       final paid = order(method: 'payu', paymentStatus: 'aprobado');
       expect(paid.paymentStatus, PaymentStatus.aprobado);

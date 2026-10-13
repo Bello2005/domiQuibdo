@@ -17,13 +17,28 @@ extension OrderStatusColors on OrderStatus {
 }
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({super.key, required this.status});
+  const StatusChip({super.key, required this.status, this.label, this.icon, this.waitingForPayment = false});
+
+  /// Estado del pedido junto con su pago: antes de pagar dice "Por pagar", no "Recibido".
+  StatusChip.ofOrder(Order order, {super.key})
+    : status = order.status,
+      label = order.statusLabel,
+      icon = order.statusIcon,
+      waitingForPayment = order.isWaitingForPayment;
 
   final OrderStatus status;
+  final String? label;
+  final IconData? icon;
+
+  /// Se pinta en el tono de aviso (borojó), como las tarjetas de pago pendiente.
+  final bool waitingForPayment;
 
   @override
   Widget build(BuildContext context) {
-    final (background, foreground) = status.colors(Theme.of(context).colorScheme);
+    final scheme = Theme.of(context).colorScheme;
+    final (background, foreground) = waitingForPayment
+        ? (scheme.tertiaryContainer, scheme.onTertiaryContainer)
+        : status.colors(scheme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
@@ -38,9 +53,9 @@ class StatusChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(status.icon, size: 14, color: foreground),
+          Icon(icon ?? status.icon, size: 14, color: foreground),
           const SizedBox(width: 4),
-          Text(status.label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: foreground)),
+          Text(label ?? status.label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: foreground)),
         ],
       ),
     );

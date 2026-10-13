@@ -118,7 +118,7 @@ class _OwnerOrderCardState extends ConsumerState<_OwnerOrderCard> {
             Row(
               children: [
                 Expanded(child: Text('Pedido #${order.id}', style: theme.textTheme.titleMedium)),
-                StatusChip(status: order.status),
+                StatusChip.ofOrder(order),
               ],
             ),
             const SizedBox(height: 2),

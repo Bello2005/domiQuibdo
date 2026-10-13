@@ -97,7 +97,7 @@ class _OrderCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  StatusChip(status: order.status),
+                  StatusChip.ofOrder(order),
                   const SizedBox(height: 8),
                   Text(formatCop(order.total), style: theme.textTheme.titleSmall),
                 ],

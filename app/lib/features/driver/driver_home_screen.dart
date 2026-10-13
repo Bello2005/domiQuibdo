@@ -107,7 +107,7 @@ class _DriverOrderCard extends StatelessWidget {
                   ],
                 ),
               ),
-              StatusChip(status: order.status),
+              StatusChip.ofOrder(order),
             ],
           ),
         ),
