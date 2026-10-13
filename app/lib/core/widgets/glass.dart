@@ -145,11 +145,16 @@ class Glass extends StatelessWidget {
     this.tint,
     this.tintStrength = 0.16,
     this.shadow = true,
+    this.solid = false,
     this.onTap,
   });
 
   final Widget child;
   final double radius;
+
+  /// Superficie casi opaca del color del tema: para paneles sobre mapas o fotos, donde un vidrio
+  /// translúcido deja ver demasiado y el texto pierde contraste (sobre todo en modo oscuro).
+  final bool solid;
 
   /// Desenfoca el contenido de atrás. Usarlo donde hay algo detrás que mirar (mapa, scroll).
   final bool blur;
@@ -163,6 +168,8 @@ class Glass extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = GlassStyle.of(context);
     final shape = BorderRadius.circular(radius);
+    final surfaceTint = solid ? Theme.of(context).colorScheme.surface : tint;
+    final surfaceStrength = solid ? 0.95 : tintStrength;
 
     Widget content = padding == null ? child : Padding(padding: padding!, child: child);
     content = Material(
@@ -173,7 +180,7 @@ class Glass extends StatelessWidget {
     Widget surface = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: shape,
-        gradient: style.fill(tint: tint, tintStrength: tintStrength),
+        gradient: style.fill(tint: surfaceTint, tintStrength: surfaceStrength),
       ),
       child: CustomPaint(
         foregroundPainter: _SpecularEdge(radius: radius, style: style),
@@ -244,6 +251,7 @@ class GlassCard extends StatelessWidget {
     this.margin,
     this.radius = 24,
     this.blur = false,
+    this.solid = false,
     this.onTap,
     // Se aceptan por compatibilidad con `Card`; el vidrio siempre recorta y no usa elevación.
     Clip? clipBehavior,
@@ -255,11 +263,20 @@ class GlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final double radius;
   final bool blur;
+  final bool solid;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final card = Glass(radius: radius, blur: blur, tint: color, tintStrength: 0.55, onTap: onTap, child: child);
+    final card = Glass(
+      radius: radius,
+      blur: blur,
+      solid: solid,
+      tint: color,
+      tintStrength: 0.55,
+      onTap: onTap,
+      child: child,
+    );
     return margin == null ? card : Padding(padding: margin!, child: card);
   }
 }
@@ -448,27 +465,27 @@ class GlassPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.22),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 14, color: iconColor ?? Colors.white),
-                const SizedBox(width: 4),
-                Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
-              ],
-            ),
-          ),
+    borderRadius: BorderRadius.circular(20),
+    child: BackdropFilter(
+      filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.22),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
         ),
-      );
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: iconColor ?? Colors.white),
+            const SizedBox(width: 4),
+            Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// Espacio extra al final de las listas para que el último elemento no quede bajo la barra flotante.

@@ -4,11 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../core/config.dart';
 import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/glass.dart';
+import '../../core/widgets/map_layers.dart';
 import '../safety/share_location.dart';
 import '../safety/sos_sheet.dart';
 import 'order_repository.dart';
@@ -125,7 +125,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                 ),
               ),
               children: [
-                TileLayer(urlTemplate: AppConfig.osmTileUrl, userAgentPackageName: AppConfig.osmUserAgent),
+                const AppTileLayer(),
                 if (route.length >= 2)
                   PolylineLayer(
                     polylines: [Polyline(points: route, strokeWidth: 6, color: scheme.primary.withValues(alpha: 0.45))],
@@ -162,7 +162,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                       ],
                     ),
                   ),
-                const SimpleAttributionWidget(source: Text('OpenStreetMap contributors')),
+                appMapAttribution(context),
               ],
             ),
             SafeArea(
@@ -171,7 +171,7 @@ class _TrackingScreenState extends ConsumerState<TrackingScreen> {
                 child: Row(
                   children: [
                     Glass(
-                      blur: true,
+                      solid: true,
                       radius: 24,
                       child: SizedBox.square(
                         dimension: 48,
@@ -237,7 +237,7 @@ class _EtaPill extends StatelessWidget {
     };
 
     return Glass(
-      blur: true,
+      solid: true,
       radius: 24,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
@@ -378,7 +378,7 @@ class _TrackingPanel extends StatelessWidget {
     final scheme = theme.colorScheme;
 
     return GlassCard(
-      blur: true,
+      solid: true,
       radius: 30,
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -7,13 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/api_client.dart';
-import '../../core/config.dart';
 import '../../core/format.dart';
 import '../../core/location_service.dart';
 import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
 import '../../core/widgets/glass.dart';
+import '../../core/widgets/map_layers.dart';
 import '../orders/order_repository.dart';
 import 'delivery_confirmation_screen.dart';
 import '../orders/order_widgets.dart';
@@ -235,7 +235,7 @@ class _DeliveryPointCard extends ConsumerWidget {
                 interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
               ),
               children: [
-                TileLayer(urlTemplate: AppConfig.osmTileUrl, userAgentPackageName: AppConfig.osmUserAgent),
+                const AppTileLayer(),
                 if (route.length >= 2)
                   PolylineLayer(
                     polylines: [Polyline(points: route, strokeWidth: 5, color: scheme.primary.withValues(alpha: 0.45))],
