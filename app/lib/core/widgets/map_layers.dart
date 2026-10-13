@@ -17,15 +17,14 @@ List<double> _saturation(double s, {double brightness = 0, double contrast = 1})
   ];
 }
 
-/// Mosaicos de OpenStreetMap suavizados para que combinen con la app: en modo claro, menos saturados y
-/// más luminosos (los colores de la ruta y los marcadores destacan); en modo oscuro, mapa oscuro.
+/// Mosaicos de OpenStreetMap suavizados para que combinen con la app: menos saturados y más luminosos,
+/// así los colores de la ruta y los marcadores destacan. Es el mismo mapa en modo claro y oscuro: un
+/// mapa claro con los paneles de la app encima se lee mejor que cualquier versión oscura que probamos.
 class AppTileLayer extends StatelessWidget {
   const AppTileLayer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-
     final tiles = TileLayer(
       urlTemplate: AppConfig.osmTileUrl,
       retinaMode: RetinaMode.isHighDensity(context),
@@ -34,10 +33,8 @@ class AppTileLayer extends StatelessWidget {
 
     // El filtro se aplica a toda la capa de una vez (más barato que filtrar cada mosaico).
     return ColorFiltered(
-      colorFilter: ColorFilter.matrix(
-        dark ? _saturation(0.55, brightness: -12, contrast: 0.92) : _saturation(0.5, brightness: 14, contrast: 0.94),
-      ),
-      child: dark ? Builder(builder: (context) => darkModeTilesContainerBuilder(context, tiles)) : tiles,
+      colorFilter: ColorFilter.matrix(_saturation(0.5, brightness: 14, contrast: 0.94)),
+      child: tiles,
     );
   }
 }
