@@ -246,6 +246,99 @@ class _EtaPill extends StatelessWidget {
   }
 }
 
+/// Etapas de la entrega vistas desde el repartidor.
+enum CourierPhase {
+  atRestaurant('Llegó al restaurante', Icons.storefront_rounded),
+  onTheWay('En camino', Icons.two_wheeler_rounded),
+  delivered('Entregó', Icons.check_circle_rounded);
+
+  const CourierPhase(this.label, this.icon);
+
+  final String label;
+  final IconData icon;
+}
+
+/// A esta distancia del restaurante se considera que el repartidor todavía está recogiendo el pedido.
+const _pickupRadiusMeters = 100;
+
+/// Etapa actual: entregado, en camino (ya se alejó del restaurante) o recién llegado a recoger.
+CourierPhase courierPhase(Order order, LatLng? courier) {
+  if (order.status == OrderStatus.entregado) {
+    return CourierPhase.delivered;
+  }
+  final restaurant = order.restaurant?.position;
+  if (courier != null && restaurant != null) {
+    final away = const Distance().as(LengthUnit.Meter, restaurant, courier);
+    if (away > _pickupRadiusMeters) {
+      return CourierPhase.onTheWay;
+    }
+  }
+  return CourierPhase.atRestaurant;
+}
+
+/// Tres pasos: llegó al restaurante, en camino, entregó.
+class CourierTimeline extends StatelessWidget {
+  const CourierTimeline({super.key, required this.phase});
+
+  final CourierPhase phase;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final steps = CourierPhase.values;
+
+    Widget line(bool done) => Expanded(
+          child: Container(
+            height: 3,
+            margin: const EdgeInsets.only(bottom: 22),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(2),
+              color: done ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
+        );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final step in steps) ...[
+          if (step != steps.first) line(step.index <= phase.index),
+          Column(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: step.index <= phase.index ? scheme.primary : scheme.surfaceContainerHighest,
+                  boxShadow: step == phase
+                      ? [BoxShadow(color: scheme.primary.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4))]
+                      : null,
+                ),
+                child: Icon(
+                  step.icon,
+                  size: 18,
+                  color: step.index <= phase.index ? scheme.onPrimary : scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                step.label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: step == phase ? scheme.primary : scheme.onSurfaceVariant,
+                  fontWeight: step == phase ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _TrackingPanel extends StatelessWidget {
   const _TrackingPanel({required this.order, required this.arrived, this.courierPosition});
 
@@ -292,6 +385,8 @@ class _TrackingPanel extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 14),
+            CourierTimeline(phase: courierPhase(order, courierPosition)),
             if (arrived && order.verificationCode != null) ...[
               const SizedBox(height: 12),
               InfoBanner(

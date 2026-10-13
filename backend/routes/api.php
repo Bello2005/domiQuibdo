@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('orders/{order}', [OrderController::class, 'show']);
     Route::get('orders/{order}/route', [OrderController::class, 'route']);
     Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
+    Route::post('orders/{order}/pay-cash', [OrderController::class, 'payInCash']);
     Route::get('orders/{order}/payment', [PaymentController::class, 'show']);
     Route::get('orders/{order}/location', [LocationController::class, 'show']);
     // SOS / reportes: límite bajo para que no se use para inundar a soporte.

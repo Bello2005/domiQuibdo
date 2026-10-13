@@ -39,6 +39,15 @@ class OrderPolicy
             && $order->restaurant()->where('user_id', $user->id)->exists();
     }
 
+    /** El cliente puede dejar de pagar en línea y pagar en efectivo si PayU aún no aprobó el pago. */
+    public function payInCash(User $user, Order $order): bool
+    {
+        return $user->id === $order->user_id
+            && $order->status === OrderStatus::Pendiente
+            && $order->payment_method === 'payu'
+            && $order->payment_status !== PaymentStatus::Aprobado;
+    }
+
     /**
      * El cliente solo cancela mientras el restaurante no haya confirmado el pedido.
      * Si ya pagó en línea, la cancelación implica devolución y la gestiona soporte.

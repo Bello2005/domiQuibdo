@@ -68,6 +68,9 @@ class OrderRepository {
         }),
       );
 
+  /// Deja de pagar en línea: el pedido se paga en efectivo al recibirlo.
+  Future<Order> payInCash(int id) => _order(() => _dio.post('orders/$id/pay-cash'));
+
   /// Enlace firmado al checkout de PayU; null si el pedido ya no tiene un pago pendiente.
   Future<String?> paymentCheckoutUrl(int id) => guardApi(() async {
         final response = await _dio.get<Map<String, dynamic>>('orders/$id/payment');

@@ -45,6 +45,16 @@ class OrderController extends Controller
         return OrderResource::make($order->load(Order::DETAIL_RELATIONS));
     }
 
+    /** Cambia un pedido por pagar en línea a efectivo contra entrega. */
+    public function payInCash(Order $order): OrderResource
+    {
+        Gate::authorize('payInCash', $order);
+
+        $order->update(['payment_method' => 'efectivo', 'payment_status' => null]);
+
+        return OrderResource::make($order->load(Order::DETAIL_RELATIONS));
+    }
+
     public function route(Order $order): JsonResponse
     {
         Gate::authorize('view', $order);

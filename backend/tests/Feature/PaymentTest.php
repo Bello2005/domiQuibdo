@@ -244,6 +244,46 @@ class PaymentTest extends TestCase
         $this->postJson("/api/driver/orders/{$order->id}/advance")->assertUnprocessable();
     }
 
+    public function test_customer_can_switch_unpaid_order_to_cash(): void
+    {
+        $order = $this->placePayuOrder();
+
+        $this->postJson("/api/orders/{$order->id}/pay-cash")
+            ->assertOk()
+            ->assertJsonPath('payment_method', 'efectivo')
+            ->assertJsonPath('payment_status', null);
+
+        $order->refresh();
+        $this->assertFalse($order->isAwaitingPayment());
+        $this->getJson("/api/orders/{$order->id}/payment")->assertUnprocessable();
+    }
+
+    public function test_cash_order_is_visible_to_the_restaurant_after_switching(): void
+    {
+        $order = $this->placePayuOrder();
+        $this->postJson("/api/orders/{$order->id}/pay-cash")->assertOk();
+
+        $this->actingAsRestaurant();
+        $this->postJson("/api/restaurant/orders/{$order->id}/advance")->assertOk()->assertJsonPath('status', 'confirmado');
+    }
+
+    public function test_paid_order_cannot_be_switched_to_cash(): void
+    {
+        $order = $this->placePayuOrder();
+        $this->confirm($order, 4)->assertOk();
+        Sanctum::actingAs($this->cliente());
+
+        $this->postJson("/api/orders/{$order->id}/pay-cash")->assertForbidden();
+    }
+
+    public function test_only_the_owner_can_switch_to_cash(): void
+    {
+        $order = $this->placePayuOrder();
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson("/api/orders/{$order->id}/pay-cash")->assertForbidden();
+    }
+
     public function test_customer_cannot_cancel_after_paying(): void
     {
         $order = $this->placePayuOrder();

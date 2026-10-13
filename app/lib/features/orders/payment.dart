@@ -74,6 +74,41 @@ class _PaymentCardState extends ConsumerState<PaymentCard> with WidgetsBindingOb
     if (state == AppLifecycleState.resumed) ref.invalidate(orderDetailProvider(widget.order.id));
   }
 
+  Future<void> _payInCash() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Pagar en efectivo?'),
+        content: const Text(
+          'Dejas de pagar en línea y le pagas al repartidor cuando recibas tu pedido. '
+          'El restaurante lo podrá preparar de inmediato.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Volver')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sí, en efectivo')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await ref.read(orderRepositoryProvider).payInCash(widget.order.id);
+      ref
+        ..invalidate(orderDetailProvider(widget.order.id))
+        ..invalidate(ordersProvider);
+    } on ApiException catch (e) {
+      if (mounted) {
+        showMessage(context, e.message);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _busy = false);
+      }
+    }
+  }
+
   Future<void> _pay() async {
     setState(() => _busy = true);
     await openPayuCheckout(context, ref, widget.order.id);
@@ -125,6 +160,12 @@ class _PaymentCardState extends ConsumerState<PaymentCard> with WidgetsBindingOb
                 ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.lock_outline),
             label: Text(status == PaymentStatus.rechazado ? 'Reintentar pago' : 'Pagar ahora con PayU'),
+          ),
+          const SizedBox(height: 6),
+          TextButton.icon(
+            onPressed: _busy ? null : _payInCash,
+            icon: const Icon(Icons.payments_outlined),
+            label: const Text('Mejor pago en efectivo'),
           ),
         ],
       ],
