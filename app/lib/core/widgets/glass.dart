@@ -410,6 +410,10 @@ class _NavButton extends StatelessWidget {
 class GlassBarBackground extends StatelessWidget {
   const GlassBarBackground({super.key});
 
+  /// Color base de la barra: casi opaco, para que el contenido que pasa por debajo no se lea.
+  static Color tint(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark ? const Color(0xF20A110E) : const Color(0xF2F6F1E8);
+
   @override
   Widget build(BuildContext context) {
     final style = GlassStyle.of(context);
@@ -423,8 +427,8 @@ class GlassBarBackground extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: isDark
-                  ? const [Color(0xCC0A110E), Color(0x990A110E)]
-                  : const [Color(0xD9F6F1E8), Color(0xA6F6F1E8)],
+                  ? const [Color(0xF20A110E), Color(0xE60A110E)]
+                  : const [Color(0xF5F6F1E8), Color(0xEBF6F1E8)],
             ),
             border: Border(bottom: BorderSide(color: style.hairline)),
           ),

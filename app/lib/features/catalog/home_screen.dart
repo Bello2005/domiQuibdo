@@ -41,6 +41,7 @@ class HomeScreen extends ConsumerWidget {
               pinned: true,
               toolbarHeight: 84,
               titleSpacing: 20,
+              backgroundColor: GlassBarBackground.tint(context),
               flexibleSpace: const GlassBarBackground(),
               title: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

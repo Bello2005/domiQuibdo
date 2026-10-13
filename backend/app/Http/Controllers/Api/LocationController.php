@@ -16,11 +16,16 @@ class LocationController extends Controller
     /** El repartidor asignado reporta su posición mientras el pedido va en camino. */
     public function store(CourierLocationRequest $request, Order $order, TrackingService $tracking): JsonResponse
     {
+        // La policy deja pasar al repartidor asignado o, si nadie lo tiene, a cualquiera.
         Gate::authorize('deliver', $order);
-        abort_unless($order->repartidor_id === $request->user()->id, 403);
 
         if ($order->status !== OrderStatus::EnCamino) {
             throw ValidationException::withMessages(['status' => 'Solo se reporta la ubicación mientras el pedido va en camino.']);
+        }
+
+        // El restaurante entrega el pedido sin asignarlo: el primer repartidor que reporta se lo queda.
+        if ($order->repartidor_id === null) {
+            $order->update(['repartidor_id' => $request->user()->id]);
         }
 
         $order->courierLocations()->create([

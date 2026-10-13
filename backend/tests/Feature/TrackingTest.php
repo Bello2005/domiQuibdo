@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
+use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,13 +99,40 @@ class TrackingTest extends TestCase
     {
         $order = $this->order();
         $other = User::factory()->create();
-        $other->role = \App\Enums\UserRole::Repartidor;
+        $other->role = UserRole::Repartidor;
         $other->save();
         Sanctum::actingAs($other);
 
         $this->ping($order)->assertForbidden();
 
         $this->as('cliente@demo.co');
+        $this->ping($order)->assertForbidden();
+    }
+
+    /** El restaurante pasa el pedido a "en camino" sin asignar a nadie: el primer repartidor que reporta se lo queda. */
+    public function test_first_driver_to_report_claims_an_unassigned_order(): void
+    {
+        $order = $this->order();
+        $order->update(['repartidor_id' => null]);
+        $driver = $this->as('repartidor@demo.co');
+
+        $this->ping($order)->assertCreated();
+
+        $this->assertSame($driver->id, $order->fresh()->repartidor_id);
+    }
+
+    public function test_second_driver_cannot_report_on_a_claimed_order(): void
+    {
+        $order = $this->order();
+        $order->update(['repartidor_id' => null]);
+        $this->as('repartidor@demo.co');
+        $this->ping($order)->assertCreated();
+
+        $other = User::factory()->create();
+        $other->role = UserRole::Repartidor;
+        $other->save();
+        Sanctum::actingAs($other);
+
         $this->ping($order)->assertForbidden();
     }
 
