@@ -70,8 +70,15 @@ class AuthController extends AsyncNotifier<AppUser?> {
     events.addListener(onExpired);
     ref.onDispose(() => events.removeListener(onExpired));
 
-    return ref.read(authRepositoryProvider).restoreSession();
+    // La bienvenida animada dura al menos esto, aunque la sesión se restaure antes.
+    final (user, _) = await (
+      ref.read(authRepositoryProvider).restoreSession(),
+      Future<void>.delayed(splashMinimum),
+    ).wait;
+    return user;
   }
+
+  static const splashMinimum = Duration(milliseconds: 1600);
 
   // No se pone el estado en loading: cada pantalla maneja su propio indicador
   // y así el router no redirige al splash en medio del login.

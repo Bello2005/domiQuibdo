@@ -141,6 +141,7 @@ def main() -> None:
 
     print("App Flutter (cabecera de marca)")
     save(icon(glyph, 512), "app/assets/branding/logo.png")
+    save(scaled(glyph, 512), "app/assets/branding/glyph.png")  # figura sola: bienvenida animada
 
     print("Web (app Flutter)")
     save(icon(glyph, 32), "app/web/favicon.png")

@@ -40,7 +40,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) => _redirect(auth.value, state.matchedLocation),
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
-      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      // Fundido suave desde la bienvenida animada.
+      GoRoute(
+        path: '/login',
+        pageBuilder: (_, state) => CustomTransitionPage(
+          key: state.pageKey,
+          transitionDuration: const Duration(milliseconds: 550),
+          transitionsBuilder: (_, animation, _, child) => FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            child: child,
+          ),
+          child: const LoginScreen(),
+        ),
+      ),
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
 
       // App del cliente: Inicio · Pedidos · Carrito · Perfil
