@@ -140,7 +140,7 @@ def main() -> None:
     save(icon(glyph, 1024), "branding/logo.png")
 
     print("App Flutter (cabecera de marca)")
-    save(icon(glyph, 256), "app/assets/branding/logo.png")
+    save(icon(glyph, 512), "app/assets/branding/logo.png")
 
     print("Web (app Flutter)")
     save(icon(glyph, 32), "app/web/favicon.png")

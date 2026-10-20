@@ -2,125 +2,104 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 
-/// Cabecera de marca: bloque profundo selva → río con luces internas, logo de vidrio
-/// color borojó y las tres promesas de seguridad de la app.
+/// Cabecera de marca: el logo grande y centrado, como en la tienda de apps, con
+/// un halo suave detrás, el nombre y el eslogan. El fondo queda claro para que
+/// el logo sea lo único verde intenso de la pantalla.
 class BrandHeader extends StatelessWidget {
-  const BrandHeader({super.key, this.subtitle = 'Domicilios seguros de los restaurantes de tu barrio.'});
+  const BrandHeader({super.key, this.logoSize = 112});
 
-  final String subtitle;
+  final double logoSize;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final text = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final radius = BorderRadius.circular(logoSize * 0.24);
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(36),
-        boxShadow: const [
-          BoxShadow(color: Color(0x401B5E3F), blurRadius: 40, offset: Offset(0, 22), spreadRadius: -14),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(36),
-        child: DecoratedBox(
-          decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: logoSize * 2,
+          height: logoSize * 1.5,
           child: Stack(
+            alignment: Alignment.center,
             children: [
-              const Positioned(right: -70, bottom: -90, child: _Glow(size: 260, color: AppColors.borojo, alpha: 0.45)),
-              const Positioned(left: -60, top: -80, child: _Glow(size: 220, color: Color(0xFF7FE0AE), alpha: 0.28)),
+              _Glow(size: logoSize * 2, color: AppColors.selvaBright, alpha: isDark ? 0.30 : 0.22),
               Positioned(
-                right: -24,
-                top: 18,
-                child: Icon(Icons.eco_rounded, size: 150, color: Colors.white.withValues(alpha: 0.06)),
+                right: logoSize * 0.18,
+                bottom: 0,
+                child: _Glow(size: logoSize * 1.1, color: AppColors.borojo, alpha: isDark ? 0.22 : 0.16),
               ),
-              // Reflejo superior del vidrio.
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(36),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.center,
-                      colors: [Colors.white.withValues(alpha: 0.14), Colors.white.withValues(alpha: 0)],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(26, 26, 26, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const _LogoTile(),
-                    const SizedBox(height: 22),
-                    Text('DomiQuibdó', style: text.displaySmall?.copyWith(color: Colors.white)),
-                    const SizedBox(height: 6),
-                    Text(subtitle, style: text.bodyLarge?.copyWith(color: Colors.white.withValues(alpha: 0.86))),
-                    const SizedBox(height: 18),
-                    const Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _TrustPill(icon: Icons.verified_user_rounded, label: 'Código de entrega'),
-                        _TrustPill(icon: Icons.sos_rounded, label: 'Botón SOS'),
-                        _TrustPill(icon: Icons.lock_rounded, label: 'Pago seguro'),
-                      ],
+              Container(
+                width: logoSize,
+                height: logoSize,
+                decoration: BoxDecoration(
+                  borderRadius: radius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.selvaDeep.withValues(alpha: isDark ? 0.6 : 0.35),
+                      blurRadius: 32,
+                      offset: const Offset(0, 16),
+                      spreadRadius: -8,
                     ),
                   ],
+                ),
+                child: ClipRRect(
+                  borderRadius: radius,
+                  child: Image.asset('assets/branding/logo.png', fit: BoxFit.cover),
                 ),
               ),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          'DomiQuibdó',
+          textAlign: TextAlign.center,
+          style: text.displaySmall?.copyWith(color: isDark ? Colors.white : AppColors.selvaDeep),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Llegamos a donde nos necesites',
+          textAlign: TextAlign.center,
+          style: text.bodyLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+      ],
     );
   }
 }
 
-class _LogoTile extends StatelessWidget {
-  const _LogoTile();
+/// Las tres promesas de seguridad, en una línea discreta bajo el formulario.
+class TrustRow extends StatelessWidget {
+  const TrustRow({super.key});
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 64,
-    height: 64,
-    // Borde de vidrio para que el logo (también verde) se despegue del fondo.
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.55), width: 1.5),
-      boxShadow: const [BoxShadow(color: Color(0x55000000), blurRadius: 22, offset: Offset(0, 10))],
-    ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16.5),
-      child: Image.asset('assets/branding/logo.png', fit: BoxFit.cover),
-    ),
-  );
-}
-
-class _TrustPill extends StatelessWidget {
-  const _TrustPill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.13),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 16,
+      runSpacing: 8,
       children: [
-        Icon(icon, size: 14, color: Colors.white),
-        const SizedBox(width: 6),
-        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
+        for (final (icon, label) in const [
+          (Icons.verified_user_rounded, 'Código de entrega'),
+          (Icons.sos_rounded, 'Botón SOS'),
+          (Icons.lock_rounded, 'Pago seguro'),
+        ])
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: theme.colorScheme.primary),
+              const SizedBox(width: 5),
+              Text(label, style: style),
+            ],
+          ),
       ],
-    ),
-  );
+    );
+  }
 }
 
 class _Glow extends StatelessWidget {
