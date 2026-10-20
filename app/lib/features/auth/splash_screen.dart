@@ -2,11 +2,10 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Bienvenida animada. Arranca con el mismo verde y la misma figura del splash
-/// nativo de Android, así el paso al primer cuadro de Flutter no se nota; luego
-/// la figura crece con un halo, pasa un brillo y aparecen el nombre y el eslogan.
-/// El router sale de aquí cuando termina de restaurar la sesión (mínimo
-/// `AuthController.splashMinimum`), con un fundido hacia el login o el inicio.
+/// Bienvenida animada: la única entrada de la app. El arranque del sistema solo muestra el
+/// mismo verde (sin ícono), así que aquí la figura aparece desde cero, crece con un halo,
+/// pasa un brillo y aparecen el nombre y el eslogan. El router sale de aquí cuando termina de
+/// restaurar la sesión (mínimo `AuthController.splashMinimum`), con un fundido.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -99,9 +98,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Transform.scale(
-                        scale: 1 + 0.06 * math.sin(math.pi * _logo.value),
-                        child: _ShiningGlyph(height: glyphHeight, shine: _shine.value),
+                      // Entra desde cero: aparece, crece con un leve rebote y se asienta.
+                      Opacity(
+                        opacity: _logo.value.clamp(0, 1),
+                        child: Transform.scale(
+                          scale: 0.7 + 0.3 * _logo.value,
+                          child: _ShiningGlyph(height: glyphHeight, shine: _shine.value),
+                        ),
                       ),
                       SizedBox(height: glyphHeight * 0.28),
                       _Reveal(

@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Splash de Android 11 y anteriores: verde selva con la Q del ícono al centro -->
+<!-- Arranque del sistema (Android 11 y anteriores): solo el verde de la marca. La entrada
+     visible es la animada de Flutter (lib/features/auth/splash_screen.dart). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/ic_launcher_background" />
-    <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/ic_launcher_foreground" />
-    </item>
 </layer-list>
