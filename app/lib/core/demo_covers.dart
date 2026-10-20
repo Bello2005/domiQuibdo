@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/services.dart';
 
 /// Fotos de portada locales para la demo de clase.
@@ -6,9 +8,13 @@ import 'package:flutter/services.dart';
 /// la `_0` es la portada y el resto forman la galería del detalle. Reemplazan a la
 /// foto que manda el backend. Esa carpeta está en .gitignore: las fotos solo viajan
 /// dentro del APK que se compila en el equipo, no se publican.
+///
+/// `assets/demo_covers/dishes.json` (opcional) asigna fotos a los platos:
+/// `{"<id del restaurante>|<nombre del plato>": "assets/demo_covers/<archivo>"}`.
 abstract final class DemoCovers {
   static const _dir = 'assets/demo_covers/';
   static final Map<int, List<String>> _byRestaurant = {};
+  static final Map<String, String> _dishes = {};
 
   static Future<void> load() async {
     final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
@@ -23,6 +29,10 @@ abstract final class DemoCovers {
       value.sort((a, b) => a.$1.compareTo(b.$1));
       _byRestaurant[key] = [for (final (_, asset) in value) asset];
     }
+    if (manifest.listAssets().contains('${_dir}dishes.json')) {
+      final json = jsonDecode(await rootBundle.loadString('${_dir}dishes.json')) as Map<String, dynamic>;
+      _dishes.addAll(json.cast<String, String>());
+    }
   }
 
   /// Portada local del restaurante, o null si no hay.
@@ -30,4 +40,7 @@ abstract final class DemoCovers {
 
   /// Todas las fotos locales del restaurante (portada primero); vacía si no hay.
   static List<String> gallery(int restaurantId) => _byRestaurant[restaurantId] ?? const [];
+
+  /// Foto local del plato, o null si no hay.
+  static String? dish(int restaurantId, String dishName) => _dishes['$restaurantId|$dishName'];
 }

@@ -114,6 +114,7 @@ class Dish {
     required this.name,
     required this.price,
     this.description,
+    this.imageUrl,
     this.isAvailable = true,
   });
 
@@ -122,6 +123,7 @@ class Dish {
         restaurantId: json['restaurant_id'] as int,
         name: json['name'] as String,
         description: json['description'] as String?,
+        imageUrl: json['image_url'] as String?,
         price: _toDouble(json['price']),
         isAvailable: json['is_available'] as bool? ?? true,
       );
@@ -130,6 +132,7 @@ class Dish {
   final int restaurantId;
   final String name;
   final String? description;
+  final String? imageUrl;
   final double price;
   final bool isAvailable;
 }

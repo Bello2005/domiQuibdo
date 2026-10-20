@@ -185,11 +185,12 @@ class DishTile extends ConsumerWidget {
         child: Row(
           children: [
             SizedBox.square(
-              dimension: 72,
+              dimension: 80,
               child: GeneratedCover(
                 category: restaurant.category,
                 iconSize: 24,
                 seed: dish.id,
+                imageUrl: DemoCovers.dish(restaurant.id, dish.name) ?? dish.imageUrl,
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
