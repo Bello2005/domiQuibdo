@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Portada generada por categoría (degradado + ícono). Evita depender de fotos
-/// externas o con derechos de autor, y nunca "se rompe" sin internet.
+/// Portada generada por categoría (degradado + ícono). Si el negocio tiene foto
+/// (`imageUrl`) se muestra encima; la portada generada queda de respaldo mientras
+/// carga o si no hay internet, así nunca "se rompe".
 class CategoryStyle {
   const CategoryStyle(this.colors, this.icon);
 
@@ -31,6 +32,7 @@ class GeneratedCover extends StatelessWidget {
     this.iconSize = 40,
     this.borderRadius = BorderRadius.zero,
     this.seed = 0,
+    this.imageUrl,
   });
 
   final String category;
@@ -41,8 +43,39 @@ class GeneratedCover extends StatelessWidget {
   /// Varía levemente la composición para que dos portadas iguales no se vean idénticas.
   final int seed;
 
+  final String? imageUrl;
+
   @override
   Widget build(BuildContext context) {
+    final generated = _generated();
+    final url = imageUrl;
+    if (url == null || url.isEmpty) return generated;
+
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: SizedBox(
+        height: height,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            generated,
+            Image.network(
+              url,
+              fit: BoxFit.cover,
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) => AnimatedOpacity(
+                opacity: frame == null && !wasSynchronouslyLoaded ? 0 : 1,
+                duration: const Duration(milliseconds: 300),
+                child: child,
+              ),
+              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _generated() {
     final style = CategoryStyle.of(category);
     final shift = (seed % 5) * 0.08;
 

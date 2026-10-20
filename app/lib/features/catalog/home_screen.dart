@@ -209,6 +209,7 @@ class RestaurantCard extends StatelessWidget {
                     child: GeneratedCover(
                       category: restaurant.category,
                       seed: restaurant.id,
+                      imageUrl: restaurant.coverImageUrl,
                       borderRadius: BorderRadius.circular(23),
                     ),
                   ),

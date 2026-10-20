@@ -145,6 +145,7 @@ class Restaurant {
     required this.deliveryTimeMin,
     this.description,
     this.phone,
+    this.coverImageUrl,
     this.isActive = true,
     this.menu = const [],
   });
@@ -157,6 +158,7 @@ class Restaurant {
         position: _latLng(json),
         addressText: json['address_text'] as String,
         phone: json['phone'] as String?,
+        coverImageUrl: json['cover_image_url'] as String?,
         rating: _toDouble(json['rating_avg']),
         deliveryTimeMin: json['delivery_time_min'] as int,
         isActive: json['is_active'] as bool? ?? true,
@@ -173,6 +175,7 @@ class Restaurant {
   final LatLng position;
   final String addressText;
   final String? phone;
+  final String? coverImageUrl;
   final double rating;
   final int deliveryTimeMin;
   final bool isActive;

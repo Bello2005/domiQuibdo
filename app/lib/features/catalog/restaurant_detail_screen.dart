@@ -40,7 +40,7 @@ class RestaurantDetailScreen extends ConsumerWidget {
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
                 tag: 'restaurant-cover-$id',
-                child: GeneratedCover(category: category, iconSize: 56, seed: id),
+                child: GeneratedCover(category: category, iconSize: 56, seed: id, imageUrl: restaurant?.coverImageUrl),
               ),
             ),
           ),

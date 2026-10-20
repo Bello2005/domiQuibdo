@@ -9,6 +9,39 @@ use Illuminate\Database\Seeder;
 class RestaurantSeeder extends Seeder
 {
     /**
+     * Fotos de portada (Wikimedia Commons, licencias libres). Son ilustrativas para
+     * la demo de clase: no son fotos de los negocios. Autor, licencia y fuente encima de cada una.
+     *
+     * @var array<string, string>
+     */
+    public const COVER_PHOTOS = [
+        // Woothauporki · CC BY-SA 3.0 · https://commons.wikimedia.org/wiki/File:HK_Shek_Tong_Tsui_Hill_Road_Treasure_Lake_Restaurant_seafood_Lobster_noodle_dish_Aug-2012.JPG
+        'Al Aire Rooftop Quibdó' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/HK_Shek_Tong_Tsui_Hill_Road_Treasure_Lake_Restaurant_seafood_Lobster_noodle_dish_Aug-2012.JPG/960px-HK_Shek_Tong_Tsui_Hill_Road_Treasure_Lake_Restaurant_seafood_Lobster_noodle_dish_Aug-2012.JPG',
+        // PapiPijuan · CC BY-SA 4.0 · https://commons.wikimedia.org/wiki/File:Comida_de_la_Playa_de_Santa_Ver%C3%B3nica.jpg
+        'Brisas Del Atrato Restaurante Bar' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/05/Comida_de_la_Playa_de_Santa_Ver%C3%B3nica.jpg/960px-Comida_de_la_Playa_de_Santa_Ver%C3%B3nica.jpg',
+        // Edgar Zuniga Jr. · CC BY 2.0 · https://commons.wikimedia.org/wiki/File:Bandeja_Paisa_(Bogot%C3%A1).jpg
+        'Restaurante Maria Mulata' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Bandeja_Paisa_%28Bogot%C3%A1%29.jpg/960px-Bandeja_Paisa_%28Bogot%C3%A1%29.jpg',
+        // Agencia de Noticias ANDES · CC BY-SA 2.0 · https://commons.wikimedia.org/wiki/File:BABAHOYO_(35074365065).jpg
+        'Boga Restaurante' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/BABAHOYO_%2835074365065%29.jpg/960px-BABAHOYO_%2835074365065%29.jpg',
+        // Maxd2 · CC BY-SA 4.0 · https://commons.wikimedia.org/wiki/File:Asado_tradicional_argentino,_le%C3%B1a,_brasas.jpg
+        'Al Carbón Parrilla Bar' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Asado_tradicional_argentino%2C_le%C3%B1a%2C_brasas.jpg/960px-Asado_tradicional_argentino%2C_le%C3%B1a%2C_brasas.jpg',
+        // Xemenendura · CC BY-SA 4.0 · https://commons.wikimedia.org/wiki/File:Sancocho_de_Espinazo.jpg
+        'La paila de mi abuela' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/01/Sancocho_de_Espinazo.jpg/960px-Sancocho_de_Espinazo.jpg',
+        // Marcomogollon · CC BY-SA 4.0 · https://commons.wikimedia.org/wiki/File:Pollo_a_la_brasa_para_llevar.JPG
+        'Pollos Nacho' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Pollo_a_la_brasa_para_llevar.JPG/960px-Pollo_a_la_brasa_para_llevar.JPG',
+        // BrokenSphere · CC BY-SA 3.0 · https://commons.wikimedia.org/wiki/File:KFC_Original_Recipe_chicken_in_bucket.jpg
+        'Frisby CC El Caraño' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/KFC_Original_Recipe_chicken_in_bucket.jpg/960px-KFC_Original_Recipe_chicken_in_bucket.jpg',
+        // Joy · CC BY 2.0 · https://commons.wikimedia.org/wiki/File:Scooping_passionfruit_ice_cream_(4566754508).jpg
+        'Helados Makerule' => 'https://upload.wikimedia.org/wikipedia/commons/0/0a/Scooping_passionfruit_ice_cream_%284566754508%29.jpg',
+        // Kristof Zyskowski & Yulia Bereshpolova · CC BY 2.0 · https://commons.wikimedia.org/wiki/File:Arecaceae-_Bactris_gasipaes_(chontaduro)_4.jpg
+        'Nativhos' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Arecaceae-_Bactris_gasipaes_%28chontaduro%29_4.jpg/960px-Arecaceae-_Bactris_gasipaes_%28chontaduro%29_4.jpg',
+        // Joe Goldberg from Seattle, WA, USA · CC BY 2.0 · https://commons.wikimedia.org/wiki/File:Close-up_of_pastries,_with_friend_(4081126856).jpg
+        'Panadería Las Delicias Del Tambo' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/Close-up_of_pastries%2C_with_friend_%284081126856%29.jpg/960px-Close-up_of_pastries%2C_with_friend_%284081126856%29.jpg',
+        // Horacio Cambeiro · CC BY-SA 3.0 · https://commons.wikimedia.org/wiki/File:Homemade_hamburger_with_french_fries_in_Argentina.jpg
+        'ChocQuiBurger Quibdó' => 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d5/Homemade_hamburger_with_french_fries_in_Argentina.jpg/960px-Homemade_hamburger_with_french_fries_in_Argentina.jpg',
+    ];
+
+    /**
      * Negocios reales de Quibdó (nombre, dirección y teléfono de fuentes públicas).
      * Coordenadas APROXIMADAS según la dirección. Menús y precios son inventados
      * para el proyecto académico y no representan la oferta real de cada negocio.
@@ -18,6 +51,7 @@ class RestaurantSeeder extends Seeder
         foreach ($this->restaurants() as $data) {
             $menu = $data['menu'];
             unset($data['menu']);
+            $data['cover_image_url'] = self::COVER_PHOTOS[$data['name']] ?? null;
 
             $restaurant = Restaurant::create($data);
 
