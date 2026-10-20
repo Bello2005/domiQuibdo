@@ -59,7 +59,7 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
             const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.fromLTRB(20, 14, 20, 4),
               sliver: SliverToBoxAdapter(child: _SafetyBanner()),
             ),
             const SliverToBoxAdapter(child: _CategoryChips()),

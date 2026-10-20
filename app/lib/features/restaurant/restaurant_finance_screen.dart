@@ -216,19 +216,6 @@ class _NetHero extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // Tendencia de fondo en la franja libre entre la cifra y los totales: no cruza texto.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 78,
-            height: 64,
-            child: IgnorePointer(
-              child: Opacity(
-                opacity: 0.45,
-                child: Sparkline(values: [for (final d in report.daily) d.net], color: Colors.white),
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
             child: Column(
@@ -267,7 +254,18 @@ class _NetHero extends StatelessWidget {
                   'Lo que te queda después de la comisión de DomiQuibdó',
                   style: theme.textTheme.bodySmall?.copyWith(color: onBrand),
                 ),
-                const SizedBox(height: 74),
+                // Tendencia en su propio espacio: nunca se monta sobre el texto ni los totales.
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 56,
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.55,
+                      child: Sparkline(values: [for (final d in report.daily) d.net], color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
                   decoration: BoxDecoration(
