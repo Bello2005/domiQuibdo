@@ -295,7 +295,7 @@ export function Restaurants() {
                         <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm shadow-sm">
                           <MenuItemPhoto item={item} onChange={load} />
                           <div className="min-w-0 flex-1">
-                            <span className={`truncate ${item.is_available ? 'text-slate-700' : 'text-slate-400 line-through'}`}>
+                            <span className={`block truncate ${item.is_available ? 'text-slate-700' : 'text-slate-400 line-through'}`}>
                               {item.name}
                             </span>
                           </div>
