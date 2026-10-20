@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../core/widgets/common.dart';
+import '../../core/demo_covers.dart';
 import '../../core/widgets/generated_cover.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/glass.dart';
@@ -209,7 +210,7 @@ class RestaurantCard extends StatelessWidget {
                     child: GeneratedCover(
                       category: restaurant.category,
                       seed: restaurant.id,
-                      imageUrl: restaurant.coverImageUrl,
+                      imageUrl: DemoCovers.of(restaurant.id) ?? restaurant.coverImageUrl,
                       borderRadius: BorderRadius.circular(23),
                     ),
                   ),

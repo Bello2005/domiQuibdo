@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Fotos locales para la demo de clase (no se publican; ver lib/core/demo_covers.dart)
+/assets/demo_covers/*
+!/assets/demo_covers/.gitkeep

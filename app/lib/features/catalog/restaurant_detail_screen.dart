@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
+import '../../core/demo_covers.dart';
 import '../../core/widgets/generated_cover.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/glass.dart';
@@ -40,7 +41,7 @@ class RestaurantDetailScreen extends ConsumerWidget {
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
                 tag: 'restaurant-cover-$id',
-                child: GeneratedCover(category: category, iconSize: 56, seed: id, imageUrl: restaurant?.coverImageUrl),
+                child: GeneratedCover(category: category, iconSize: 56, seed: id, imageUrl: DemoCovers.of(id) ?? restaurant?.coverImageUrl),
               ),
             ),
           ),

@@ -43,6 +43,7 @@ class GeneratedCover extends StatelessWidget {
   /// Varía levemente la composición para que dos portadas iguales no se vean idénticas.
   final int seed;
 
+  /// URL de la foto, o ruta de un asset local (`assets/...`).
   final String? imageUrl;
 
   @override
@@ -59,8 +60,8 @@ class GeneratedCover extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             generated,
-            Image.network(
-              url,
+            Image(
+              image: url.startsWith('assets/') ? AssetImage(url) : NetworkImage(url) as ImageProvider,
               fit: BoxFit.cover,
               frameBuilder: (context, child, frame, wasSynchronouslyLoaded) => AnimatedOpacity(
                 opacity: frame == null && !wasSynchronouslyLoaded ? 0 : 1,
