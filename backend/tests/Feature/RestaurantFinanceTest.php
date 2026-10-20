@@ -30,11 +30,24 @@ class RestaurantFinanceTest extends TestCase
         $order = Order::first();
         $order->update([
             'status' => OrderStatus::Entregado,
-            'total' => $subtotal + $order->delivery_fee,
+            'total' => $subtotal + $order->delivery_fee + $order->service_fee + $order->payment_fee,
             'payment_method' => $paymentMethod,
         ]);
 
         return $order;
+    }
+
+    public function test_restaurant_keeps_its_whole_menu_price_by_default(): void
+    {
+        $this->owner();
+        $this->deliveredOrder(40000);
+
+        $this->getJson('/api/restaurant/finances?days=7')
+            ->assertOk()
+            ->assertJsonPath('commission_rate', 0)
+            ->assertJsonPath('summary.gross_sales', 40000)
+            ->assertJsonPath('summary.commission', 0)
+            ->assertJsonPath('summary.net_earnings', 40000);
     }
 
     public function test_report_counts_only_delivered_sales_and_applies_commission(): void

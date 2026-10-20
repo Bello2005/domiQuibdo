@@ -160,8 +160,12 @@ class RestaurantFinanceScreen extends ConsumerWidget {
       InfoBanner(
         icon: Icons.info_outline,
         text:
-            'Solo los pedidos entregados cuentan como venta. DomiQuibdó cobra el $rate de la comida; '
-            'el domicilio (${formatCop(s.deliveryFees)} en el periodo) es del repartidor.',
+            report.commissionRate == 0
+                ? 'Solo los pedidos entregados cuentan como venta. Recibes el 100 % de tu carta: '
+                    'DomiQuibdó no te cobra comisión, su tarifa la paga el cliente. El domicilio '
+                    '(${formatCop(s.deliveryFees)} en el periodo) es del repartidor.'
+                : 'Solo los pedidos entregados cuentan como venta. DomiQuibdó cobra el $rate de la comida; '
+                    'el domicilio (${formatCop(s.deliveryFees)} en el periodo) es del repartidor.',
       ),
     ];
   }
@@ -251,7 +255,9 @@ class _NetHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Lo que te queda después de la comisión de DomiQuibdó',
+                  report.commissionRate == 0
+                      ? 'Recibes el 100 % de tu carta: sin comisión'
+                      : 'Lo que te queda después de la comisión de DomiQuibdó',
                   style: theme.textTheme.bodySmall?.copyWith(color: onBrand),
                 ),
                 // Tendencia en su propio espacio: nunca se monta sobre el texto ni los totales.
@@ -283,7 +289,7 @@ class _NetHero extends StatelessWidget {
                       Expanded(
                         child: _HeroStat(
                           label: 'Comisión (${(report.commissionRate * 100).round()} %)',
-                          value: '- ${formatCop(s.commission)}',
+                          value: s.commission == 0 ? r'$0' : '- ${formatCop(s.commission)}',
                         ),
                       ),
                     ],
@@ -716,11 +722,17 @@ class _ReceiptSheetState extends ConsumerState<_ReceiptSheet> {
                     value: '',
                   ),
                   SummaryRow(label: 'Venta bruta (comida)', value: formatCop(b.subtotal)),
-                  SummaryRow(
-                    label: 'Comisión DomiQuibdó (${(b.commissionRate * 100).round()} %)',
-                    value: '- ${formatCop(b.commission)}',
-                  ),
+                  if (b.commission > 0)
+                    SummaryRow(
+                      label: 'Comisión DomiQuibdó (${(b.commissionRate * 100).round()} %)',
+                      value: '- ${formatCop(b.commission)}',
+                    ),
                   SummaryRow(label: 'Domicilio (del repartidor)', value: formatCop(b.deliveryFee)),
+                  if (b.serviceFee + b.paymentFee > 0)
+                    SummaryRow(
+                      label: 'Tarifa DomiQuibdó (la paga el cliente)',
+                      value: formatCop(b.serviceFee + b.paymentFee),
+                    ),
                   const Divider(height: 20),
                   SummaryRow(label: 'Ganancia neta', value: formatCop(b.net), emphasize: true),
                 ],

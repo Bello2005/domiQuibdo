@@ -119,6 +119,8 @@ abstract final class FinancePdf {
                               children: [
                                 _row('Subtotal comida', formatCop(b.subtotal)),
                                 _row('Domicilio (repartidor)', formatCop(b.deliveryFee)),
+                                if (b.serviceFee > 0) _row('Tarifa de servicio', formatCop(b.serviceFee)),
+                                if (b.paymentFee > 0) _row('Costo pago en línea', formatCop(b.paymentFee)),
                                 pw.Divider(color: _line, height: 14),
                                 _row('Total pagado por el cliente', formatCop(b.total), bold: true),
                               ],
@@ -366,7 +368,9 @@ abstract final class FinancePdf {
         pw.SizedBox(height: 10),
         if (b.countsAsSale) ...[
           _row('Venta bruta (comida)', formatCop(b.subtotal)),
-          _row('Comisión DomiQuibdó (${(b.commissionRate * 100).round()} %)', '- ${formatCop(b.commission)}'),
+          b.commission > 0
+              ? _row('Comisión DomiQuibdó (${(b.commissionRate * 100).round()} %)', '- ${formatCop(b.commission)}')
+              : _row('Comisión DomiQuibdó', r'$0 (sin comisión)'),
           pw.Divider(color: _line, height: 14),
           _row('Ganancia neta', formatCop(b.net), bold: true, color: _selva),
         ] else

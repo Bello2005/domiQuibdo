@@ -99,6 +99,8 @@ class OrderBreakdown {
   const OrderBreakdown({
     required this.subtotal,
     required this.deliveryFee,
+    this.serviceFee = 0,
+    this.paymentFee = 0,
     required this.total,
     required this.commissionRate,
     required this.commission,
@@ -109,6 +111,8 @@ class OrderBreakdown {
   factory OrderBreakdown.fromJson(Map<String, dynamic> json) => OrderBreakdown(
     subtotal: _num(json['subtotal']),
     deliveryFee: _num(json['delivery_fee']),
+    serviceFee: _num(json['service_fee'] ?? 0),
+    paymentFee: _num(json['payment_fee'] ?? 0),
     total: _num(json['total']),
     commissionRate: _num(json['commission_rate']),
     commission: _num(json['commission']),
@@ -118,6 +122,10 @@ class OrderBreakdown {
 
   final double subtotal;
   final double deliveryFee;
+
+  /// Tarifa de DomiQuibdó y costo de pasarela: los paga el cliente, no el restaurante.
+  final double serviceFee;
+  final double paymentFee;
   final double total;
   final double commissionRate;
   final double commission;

@@ -12,7 +12,8 @@ use Illuminate\Support\Collection;
  * Contabilidad del restaurante a partir de sus pedidos.
  *
  * - Venta: pedido entregado. Lo cancelado se reporta aparte y no suma.
- * - Venta bruta: comida (total sin domicilio). El domicilio es del repartidor.
+ * - Venta bruta: comida (total sin domicilio ni tarifas). El domicilio es del repartidor y la
+ *   tarifa de servicio y el costo de pasarela los paga el cliente a DomiQuibdó.
  * - Comisión: porcentaje de DomiQuibdó sobre la venta bruta (`domi.commission_rate`).
  * - Ganancia neta: venta bruta − comisión.
  *
@@ -31,17 +32,19 @@ final class RestaurantFinanceService
     /**
      * Desglose contable de un pedido. Solo un pedido entregado genera venta.
      *
-     * @return array{subtotal: float, delivery_fee: float, total: float, commission_rate: float, commission: float, net: float, counts_as_sale: bool}
+     * @return array{subtotal: float, delivery_fee: float, service_fee: float, payment_fee: float, total: float, commission_rate: float, commission: float, net: float, counts_as_sale: bool}
      */
     public static function breakdown(Order $order): array
     {
-        $subtotal = round($order->total - $order->delivery_fee, 2);
+        $subtotal = $order->foodSubtotal();
         $isSale = $order->status === OrderStatus::Entregado;
         $commission = $isSale ? round($subtotal * self::commissionRate(), 2) : 0.0;
 
         return [
             'subtotal' => $subtotal,
             'delivery_fee' => $order->delivery_fee,
+            'service_fee' => $order->service_fee,
+            'payment_fee' => $order->payment_fee,
             'total' => $order->total,
             'commission_rate' => self::commissionRate(),
             'commission' => $commission,
@@ -128,7 +131,7 @@ final class RestaurantFinanceService
             'items_sold' => (int) $sales->sum(fn (Order $order) => $order->items->sum('quantity')),
             'delivery_fees' => round($sales->sum('delivery_fee'), 2),
             'cancelled_orders' => $cancelled->count(),
-            'cancelled_amount' => round($cancelled->sum(fn (Order $order) => $order->total - $order->delivery_fee), 2),
+            'cancelled_amount' => round($cancelled->sum(fn (Order $order) => $order->foodSubtotal()), 2),
         ];
     }
 
@@ -166,7 +169,7 @@ final class RestaurantFinanceService
         return collect(range(0, 23))->map(fn (int $hour) => [
             'hour' => $hour,
             'orders' => count($byHour->get($hour, [])),
-            'gross' => round(collect($byHour->get($hour, []))->sum(fn (Order $order) => $order->total - $order->delivery_fee), 2),
+            'gross' => round(collect($byHour->get($hour, []))->sum(fn (Order $order) => $order->foodSubtotal()), 2),
         ])->all();
     }
 
@@ -179,7 +182,7 @@ final class RestaurantFinanceService
         return collect(config('domi.payment_methods'))->map(fn (string $method) => [
             'method' => $method,
             'orders' => $sales->where('payment_method', $method)->count(),
-            'amount' => round($sales->where('payment_method', $method)->sum(fn (Order $order) => $order->total - $order->delivery_fee), 2),
+            'amount' => round($sales->where('payment_method', $method)->sum(fn (Order $order) => $order->foodSubtotal()), 2),
         ])->all();
     }
 

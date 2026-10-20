@@ -109,7 +109,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final addresses = addressesAsync.valueOrNull ?? const <Address>[];
     final address = _selected ?? addresses.where((a) => a.esPredeterminada).firstOrNull ?? addresses.firstOrNull;
     final fee = address == null ? null : estimateDeliveryFee(cart.restaurant!.position, address.position);
-    final total = cart.subtotal + (fee ?? 0);
+    final base = cart.subtotal + (fee ?? 0) + serviceFee;
+    final paymentFee = estimatePaymentFee(base, _payment);
+    final total = base + paymentFee;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Confirmar pedido')),
@@ -169,6 +171,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   children: [
                     SummaryRow(label: 'Subtotal', value: formatCop(cart.subtotal)),
                     SummaryRow(label: 'Domicilio (estimado)', value: fee == null ? '—' : formatCop(fee)),
+                    SummaryRow(label: 'Tarifa de servicio', value: formatCop(serviceFee)),
+                    if (paymentFee > 0) SummaryRow(label: 'Costo del pago en línea', value: formatCop(paymentFee)),
                     const Divider(height: 20),
                     SummaryRow(label: 'Total', value: formatCop(total), emphasize: true),
                   ],

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'restaurant_id', 'address_id', 'repartidor_id', 'status', 'verification_code',
-    'total', 'delivery_fee', 'payment_method', 'payment_status', 'payment_reference',
+    'total', 'delivery_fee', 'service_fee', 'payment_fee', 'payment_method', 'payment_status', 'payment_reference',
     'payment_transaction_id', 'paid_at', 'notes',
 ])]
 // El código nunca se serializa por defecto; OrderResource lo expone solo al cliente dueño.
@@ -31,7 +31,15 @@ class Order extends Model
             'paid_at' => 'datetime',
             'total' => 'float',
             'delivery_fee' => 'float',
+            'service_fee' => 'float',
+            'payment_fee' => 'float',
         ];
+    }
+
+    /** Valor de la comida: lo que recibe el restaurante (el total sin domicilio ni tarifas). */
+    public function foodSubtotal(): float
+    {
+        return round($this->total - $this->delivery_fee - $this->service_fee - $this->payment_fee, 2);
     }
 
     /** Pagado en línea pero aún sin aprobación de PayU: la cocina no debe empezar. */

@@ -25,10 +25,24 @@ return [
     'routing_url' => env('ROUTING_URL', 'https://router.project-osrm.org'),
 
     /*
-    | Comisión de DomiQuibdó sobre la venta de comida (sin el domicilio, que es del repartidor).
-    | Con ella se calcula la ganancia neta del restaurante en Finanzas y en los comprobantes.
+    | Modelo de cobro: el restaurante recibe el 100 % de su carta y el repartidor el 100 % del
+    | domicilio. DomiQuibdó cobra al cliente una tarifa de servicio fija y, si paga en línea,
+    | el costo de la pasarela (para no perder plata en esos pedidos).
     */
-    'commission_rate' => (float) env('PLATFORM_COMMISSION_RATE', 0.10),
+    'service_fee' => (float) env('PLATFORM_SERVICE_FEE', 2000),
+
+    /* Costo de PayU por transacción: porcentaje + valor fijo, ambos con IVA. */
+    'payu_fee' => [
+        'rate' => (float) env('PAYU_FEE_RATE', 0.0329),
+        'fixed' => (float) env('PAYU_FEE_FIXED', 900),
+        'vat' => (float) env('PAYU_FEE_VAT', 0.19),
+    ],
+
+    /*
+    | Comisión sobre la venta de comida. En el modelo actual es 0: el restaurante no la paga.
+    | Se deja configurable por si algún día se negocia un plan distinto.
+    */
+    'commission_rate' => (float) env('PLATFORM_COMMISSION_RATE', 0),
 
     /* Zona horaria del negocio: los reportes agrupan ventas por día y hora local. */
     'business_timezone' => env('BUSINESS_TIMEZONE', 'America/Bogota'),

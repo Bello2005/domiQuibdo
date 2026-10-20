@@ -307,6 +307,8 @@ class OrderItemsCard extends StatelessWidget {
             const Divider(height: 20),
             SummaryRow(label: 'Subtotal', value: formatCop(order.subtotal)),
             SummaryRow(label: 'Domicilio', value: formatCop(order.deliveryFee)),
+            if (order.serviceFee > 0) SummaryRow(label: 'Tarifa de servicio', value: formatCop(order.serviceFee)),
+            if (order.paymentFee > 0) SummaryRow(label: 'Costo del pago en línea', value: formatCop(order.paymentFee)),
             SummaryRow(label: 'Total', value: formatCop(order.total), emphasize: true),
             const SizedBox(height: 6),
             Row(

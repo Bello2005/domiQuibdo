@@ -50,7 +50,13 @@ class OrderController extends Controller
     {
         Gate::authorize('payInCash', $order);
 
-        $order->update(['payment_method' => 'efectivo', 'payment_status' => null]);
+        // En efectivo no hay pasarela: se descuenta su costo del total.
+        $order->update([
+            'payment_method' => 'efectivo',
+            'payment_status' => null,
+            'total' => $order->total - $order->payment_fee,
+            'payment_fee' => 0,
+        ]);
 
         return OrderResource::make($order->load(Order::DETAIL_RELATIONS));
     }

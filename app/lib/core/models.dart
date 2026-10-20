@@ -332,6 +332,8 @@ class Order {
     required this.status,
     required this.subtotal,
     required this.deliveryFee,
+    this.serviceFee = 0,
+    this.paymentFee = 0,
     required this.total,
     required this.paymentMethod,
     required this.createdAt,
@@ -351,6 +353,8 @@ class Order {
         status: OrderStatus.parse(json['status'] as String),
         subtotal: _toDouble(json['subtotal']),
         deliveryFee: _toDouble(json['delivery_fee']),
+        serviceFee: _toDouble(json['service_fee'] ?? 0),
+        paymentFee: _toDouble(json['payment_fee'] ?? 0),
         total: _toDouble(json['total']),
         paymentMethod: json['payment_method'] as String,
         paymentStatus: PaymentStatus.maybeParse(json['payment_status']),
@@ -374,6 +378,12 @@ class Order {
   final OrderStatus status;
   final double subtotal;
   final double deliveryFee;
+
+  /// Tarifa de DomiQuibdó (la paga el cliente; el restaurante no paga comisión).
+  final double serviceFee;
+
+  /// Costo de la pasarela, solo si se paga en línea.
+  final double paymentFee;
   final double total;
   final String paymentMethod;
   final PaymentStatus? paymentStatus;

@@ -58,14 +58,19 @@ final class OrderService
             ]);
 
             $fee = self::deliveryFee($restaurant, $address);
+            $serviceFee = self::serviceFee();
+            $base = $lines->sum('subtotal') + $fee + $serviceFee;
+            $paymentFee = self::paymentFee($base, $data['payment_method']);
 
             $order = $user->orders()->create([
                 'restaurant_id' => $restaurant->id,
                 'address_id' => $address->id,
                 'status' => OrderStatus::Pendiente,
                 'verification_code' => self::newVerificationCode(),
-                'total' => $lines->sum('subtotal') + $fee,
+                'total' => $base + $paymentFee,
                 'delivery_fee' => $fee,
+                'service_fee' => $serviceFee,
+                'payment_fee' => $paymentFee,
                 'payment_method' => $data['payment_method'],
                 'payment_status' => $data['payment_method'] === 'payu' ? PaymentStatus::Pendiente : null,
                 'notes' => $data['notes'] ?? null,
@@ -97,6 +102,29 @@ final class OrderService
     }
 
     /** Tarifa base + valor por km, redondeada a múltiplos de 500 COP. */
+    /** Tarifa fija de DomiQuibdó que paga el cliente; el restaurante no paga comisión. */
+    public static function serviceFee(): float
+    {
+        return (float) config('domi.service_fee');
+    }
+
+    /**
+     * Costo de la pasarela que se le suma al cliente cuando paga en línea, para que la tarifa
+     * de servicio no se la coma PayU. Como PayU cobra sobre el total (que ya incluye este
+     * costo), se despeja: costo = (base·r + fijo)·(1+IVA) / (1 − r·(1+IVA)). Se redondea a $100.
+     */
+    public static function paymentFee(float $base, string $paymentMethod): float
+    {
+        if ($paymentMethod !== 'payu') {
+            return 0.0;
+        }
+
+        ['rate' => $rate, 'fixed' => $fixed, 'vat' => $vat] = config('domi.payu_fee');
+        $fee = ($base * $rate + $fixed) * (1 + $vat) / (1 - $rate * (1 + $vat));
+
+        return (float) (ceil($fee / 100) * 100);
+    }
+
     public static function deliveryFee(Restaurant $restaurant, Address $address): float
     {
         $km = CoverageService::distanceMeters(

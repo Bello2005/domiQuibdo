@@ -1,5 +1,6 @@
 import 'package:domiquibdo/core/format.dart';
 import 'package:domiquibdo/core/models.dart';
+import 'package:domiquibdo/features/cart/cart_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -119,5 +120,9 @@ void main() {
       expect(formatDistance(1200), '1,2 km');
     });
   });
-}
 
+  test('el costo de la pasarela coincide con el del backend y solo aplica a PayU', () {
+    expect(estimatePaymentFee(30000, 'efectivo'), 0);
+    expect(estimatePaymentFee(30000, 'payu'), 2400);
+  });
+}

@@ -41,7 +41,10 @@ class OrderTest extends TestCase
         ])->assertCreated();
 
         $fee = $response->json('delivery_fee');
-        $this->assertEquals($item->price * 2 + $fee, $response->json('total'));
+        $this->assertEquals(2000, $response->json('service_fee'));
+        $this->assertEquals(0, $response->json('payment_fee'));
+        $this->assertEquals($item->price * 2, $response->json('subtotal'));
+        $this->assertEquals($item->price * 2 + $fee + 2000, $response->json('total'));
         $this->assertGreaterThanOrEqual(3000, $fee);
         $this->assertMatchesRegularExpression('/^\d{4}$/', $response->json('verification_code'));
         $this->assertSame('pendiente', $response->json('status'));

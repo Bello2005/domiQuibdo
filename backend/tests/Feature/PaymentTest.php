@@ -244,14 +244,32 @@ class PaymentTest extends TestCase
         $this->postJson("/api/driver/orders/{$order->id}/advance")->assertUnprocessable();
     }
 
+    public function test_online_payment_adds_the_gateway_cost_so_the_service_fee_is_kept(): void
+    {
+        $order = $this->placePayuOrder();
+
+        $this->assertGreaterThan(0, $order->payment_fee);
+        $this->assertSame(0.0, fmod($order->payment_fee, 100.0));
+        // Lo que cobra PayU sobre el total no supera el costo que se le sumó al cliente.
+        $payu = ($order->total * 0.0329 + 900) * 1.19;
+        $this->assertGreaterThanOrEqual($payu, $order->payment_fee);
+        $this->assertEquals(
+            $order->foodSubtotal() + $order->delivery_fee + $order->service_fee + $order->payment_fee,
+            $order->total,
+        );
+    }
+
     public function test_customer_can_switch_unpaid_order_to_cash(): void
     {
         $order = $this->placePayuOrder();
+        $totalWithoutGateway = $order->total - $order->payment_fee;
 
         $this->postJson("/api/orders/{$order->id}/pay-cash")
             ->assertOk()
             ->assertJsonPath('payment_method', 'efectivo')
-            ->assertJsonPath('payment_status', null);
+            ->assertJsonPath('payment_status', null)
+            ->assertJsonPath('payment_fee', 0)
+            ->assertJsonPath('total', fn ($total) => (float) $total === $totalWithoutGateway);
 
         $order->refresh();
         $this->assertFalse($order->isAwaitingPayment());

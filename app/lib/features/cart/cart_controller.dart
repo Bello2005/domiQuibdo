@@ -56,6 +56,18 @@ class CartController extends Notifier<CartState> {
 
 final cartProvider = NotifierProvider<CartController, CartState>(CartController.new);
 
+/// Tarifa de servicio de DomiQuibdó (config `domi.service_fee`). El valor final lo fija el servidor.
+const serviceFee = 2000.0;
+
+/// Mismo cálculo que el backend (OrderService::paymentFee): costo de PayU que se le suma al
+/// cliente si paga en línea, despejado porque PayU cobra sobre el total. Redondeado a $100.
+double estimatePaymentFee(double base, String paymentMethod) {
+  if (paymentMethod != 'payu') return 0;
+  const rate = 0.0329, fixed = 900.0, vat = 0.19;
+  final fee = (base * rate + fixed) * (1 + vat) / (1 - rate * (1 + vat));
+  return (fee / 100).ceil() * 100.0;
+}
+
 /// Misma fórmula que el backend (OrderService::deliveryFee). El valor final lo fija el servidor.
 double estimateDeliveryFee(LatLng from, LatLng to) {
   final km = const Distance().as(LengthUnit.Meter, from, to) / 1000;
