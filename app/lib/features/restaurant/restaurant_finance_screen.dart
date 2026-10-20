@@ -396,16 +396,24 @@ class _KpiGrid extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final columns = constraints.maxWidth >= 700 ? 4 : 2;
-      final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
-      return Wrap(
-        spacing: 12,
-        runSpacing: 12,
+      // Filas de igual altura: con letra grande un rótulo puede ocupar dos líneas y las
+      // tarjetas vecinas no deben quedar disparejas.
+      return Column(
         children: [
-          for (final tile in tiles)
-            SizedBox(
-              width: width,
-              child: _KpiTile(tile: tile),
+          for (var start = 0; start < tiles.length; start += columns) ...[
+            if (start > 0) const SizedBox(height: 12),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = start; i < start + columns; i++) ...[
+                    if (i > start) const SizedBox(width: 12),
+                    Expanded(child: i < tiles.length ? _KpiTile(tile: tiles[i]) : const SizedBox()),
+                  ],
+                ],
+              ),
             ),
+          ],
         ],
       );
     },
@@ -446,9 +454,19 @@ class _KpiTile extends StatelessWidget {
               child: Text(tile.value, style: theme.textTheme.headlineSmall),
             ),
             const SizedBox(height: 2),
-            Text(tile.label, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+            Text(
+              tile.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            // La nota va siempre al pie, alineada entre tarjetas vecinas.
+            const Spacer(),
+            const SizedBox(height: 4),
             Text(
               tile.footnote ?? 'vs. periodo anterior',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant.withValues(alpha: 0.75)),
             ),
           ],

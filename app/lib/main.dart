@@ -30,6 +30,9 @@ class DomiQuibdoApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ref.watch(themeModeProvider),
       routerConfig: ref.watch(routerProvider),
+      // Respeta la letra grande del teléfono, pero con tope: más allá del 115 % las tarjetas,
+      // los paneles de Finanzas y las listas del restaurante se saturan y se parten.
+      builder: (context, child) => MediaQuery.withClampedTextScaling(maxScaleFactor: 1.15, child: child!),
     );
   }
 }

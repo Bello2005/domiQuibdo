@@ -98,9 +98,9 @@ class ProfileScreen extends ConsumerWidget {
                         SegmentedButton<ThemeMode>(
                           showSelectedIcon: false,
                           segments: const [
-                            ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto), label: Text('Auto')),
-                            ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: Text('Claro')),
-                            ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: Text('Oscuro')),
+                            ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto), label: _OneLine('Auto')),
+                            ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode_outlined), label: _OneLine('Claro')),
+                            ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode_outlined), label: _OneLine('Oscuro')),
                           ],
                           selected: {themeMode},
                           onSelectionChanged: (selection) => ref.read(themeModeProvider.notifier).set(selection.first),
@@ -133,4 +133,15 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Etiqueta que nunca se parte: con letra grande se reduce en vez de pasar a otra línea.
+class _OneLine extends StatelessWidget {
+  const _OneLine(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) =>
+      FittedBox(fit: BoxFit.scaleDown, child: Text(text, maxLines: 1, softWrap: false));
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'widgets/glass.dart';
+
 import '../features/addresses/address_list_screen.dart';
 import '../features/addresses/address_picker_screen.dart';
 import '../features/auth/auth_controller.dart';
@@ -50,7 +52,9 @@ final routerProvider = Provider<GoRouter>((ref) {
             opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
             child: child,
           ),
-          child: const LoginScreen(),
+          // Las páginas son transparentes: el fondo lo pone la transición del tema, que esta
+          // página propia no usa, así que se lo damos aquí (si no, el login queda en negro).
+          child: const AmbientBackground(child: LoginScreen()),
         ),
       ),
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
