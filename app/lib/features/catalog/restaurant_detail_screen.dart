@@ -11,6 +11,7 @@ import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/glass.dart';
 import '../cart/cart_controller.dart';
 import 'catalog_repository.dart';
+import 'cover_gallery.dart';
 
 class RestaurantDetailScreen extends ConsumerWidget {
   const RestaurantDetailScreen({super.key, required this.id, this.initial});
@@ -34,14 +35,21 @@ class RestaurantDetailScreen extends ConsumerWidget {
           SliverAppBar(
             pinned: true,
             stretch: true,
-            expandedHeight: 250,
+            expandedHeight: 300,
             backgroundColor: CategoryStyle.of(category).colors.first,
             foregroundColor: Colors.white,
             title: Text(restaurant?.name ?? ''),
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
                 tag: 'restaurant-cover-$id',
-                child: GeneratedCover(category: category, iconSize: 56, seed: id, imageUrl: DemoCovers.of(id) ?? restaurant?.coverImageUrl),
+                child: CoverGallery(
+                  category: category,
+                  seed: id,
+                  images: switch (DemoCovers.gallery(id)) {
+                    final local when local.isNotEmpty => local,
+                    _ => [?restaurant?.coverImageUrl],
+                  },
+                ),
               ),
             ),
           ),
