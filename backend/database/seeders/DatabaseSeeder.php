@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
             $withTestAccounts ? UserSeeder::class : null,
             RestaurantSeeder::class,
             $withTestAccounts ? DemoOrderSeeder::class : null,
+            // Ventas pasadas para la demo de Finanzas; los tests arman sus propios pedidos.
+            app()->environment('local') ? FinanceHistorySeeder::class : null,
         ])));
     }
 }

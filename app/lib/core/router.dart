@@ -18,6 +18,7 @@ import '../features/orders/order_detail_screen.dart';
 import '../features/orders/orders_screen.dart';
 import '../features/orders/tracking_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/restaurant/restaurant_finance_screen.dart';
 import '../features/restaurant/restaurant_menu_screen.dart';
 import '../features/restaurant/restaurant_orders_screen.dart';
 import 'models.dart';
@@ -105,12 +106,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const AddressPickerScreen(),
       ),
 
-      // App del restaurante: Pedidos · Mi negocio · Perfil
+      // App del restaurante: Pedidos · Finanzas · Mi negocio · Perfil
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => RestaurantShell(shell: shell),
         branches: [
           StatefulShellBranch(routes: [
             GoRoute(path: '/restaurant', builder: (_, _) => const RestaurantOrdersScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/restaurant-finances', builder: (_, _) => const RestaurantFinanceScreen()),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/restaurant-menu', builder: (_, _) => const RestaurantMenuScreen()),

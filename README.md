@@ -61,6 +61,8 @@ Antes de presentar, `php artisan migrate:fresh --seed` deja la base limpia. Qued
 | GET/PUT | `/restaurant/restaurants`, `/restaurant/restaurants/{id}` | Rol restaurante: ver su(s) negocio(s) y abrir/cerrar (`is_active`) |
 | POST/PUT/DELETE | `/restaurant/restaurants/{id}/menu-items`, `/restaurant/menu-items/{id}` | Rol restaurante: gestionar el menú propio |
 | GET · POST | `/restaurant/orders` · `/restaurant/orders/{id}/advance`, `/restaurant/orders/{id}/cancel` | Rol restaurante: pedidos de su negocio (pendiente → confirmado → preparando → en camino) y cancelación. No ve el código de entrega |
+| GET | `/restaurant/finances?days=7\|30\|90` | Rol restaurante: ventas brutas, comisión, ganancia neta, comparación con el periodo anterior, ventas por día y por hora, medios de pago, platos estrella y libro de movimientos |
+| GET | `/restaurant/orders/{id}/receipt` | Rol restaurante: datos del comprobante de un pedido propio (la app arma el PDF) |
 | POST | `/orders/{id}/cancel` | Cliente: cancela su pedido solo mientras está `pendiente` |
 | GET | `/orders/{id}/location` | GPS real: última posición del repartidor, `live`, distancia al destino y `eta_min`. Solo visible mientras el pedido va `en_camino` |
 | POST | `/driver/orders/{id}/location` | Repartidor asignado reporta `latitude`, `longitude`, `heading`, `speed_mps`, `accuracy_m` (máx. 60/min) |
@@ -111,6 +113,9 @@ En vez de depender de la IP local, el backend puede vivir en **Render** (gratis)
 - **Cliente**: catálogo, carrito, pedidos con tracking, cancelar mientras está pendiente, SOS.
 - **Repartidor**: entregas, validación del código, GPS en vivo, SOS.
 - **Restaurante** (`restaurante@demo.co`): pedidos de su negocio (confirmar → preparar → entregar al repartidor, o cancelar), abrir/cerrar el negocio y administrar el menú (agregar, editar, marcar agotado, eliminar).
+  - **Finanzas**: ganancia neta, ventas brutas y comisión de DomiQuibdó (`PLATFORM_COMMISSION_RATE`, 10 % por defecto, solo sobre la comida; el domicilio es del repartidor), gráficas de ventas por día, horas pico, medios de pago y platos estrella, y libro de movimientos. Solo los pedidos **entregados** cuentan como venta.
+  - **Comprobantes PDF** de cada pedido (desde Finanzas o desde la tarjeta del pedido entregado) y **reporte PDF** del periodo. En web se descargan; en Android se abre el menú de compartir. Son documentos soporte, no factura electrónica DIAN.
+  - En local, `migrate:fresh --seed` agrega ~4 meses de ventas de ejemplo a Pollos Nacho para que las gráficas tengan datos.
 - **Admin**: panel web en `admin/` con pedidos, restaurantes, zonas, usuarios y **alertas** (SOS y reportes con ubicación, marcar como atendida).
 
 ## 4. Desplegar en tu propio servidor Ubuntu (Docker)

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api_client.dart';
 import '../../core/models.dart';
 import '../auth/auth_controller.dart';
+import 'finance_models.dart';
 
 /// API del rol restaurante (`/api/restaurant/*`): pedidos propios, menú y abrir/cerrar el negocio.
 class RestaurantOwnerRepository {
@@ -43,6 +44,17 @@ class RestaurantOwnerRepository {
             'is_available': isAvailable ?? dish.isAvailable,
           }));
 
+  /// Ventas, comisión y ganancia de los últimos [days] días (7, 30 o 90).
+  Future<FinanceReport> finances(int days) => guardApi(() async {
+        final response = await _dio.get<Map<String, dynamic>>('restaurant/finances', queryParameters: {'days': days});
+        return FinanceReport.fromJson(response.data!);
+      });
+
+  Future<OrderReceipt> receipt(int orderId) => guardApi(() async {
+        final response = await _dio.get<Map<String, dynamic>>('restaurant/orders/$orderId/receipt');
+        return OrderReceipt.fromJson(response.data!);
+      });
+
   Future<void> deleteDish(int id) => guardApi(() => _dio.delete<void>('restaurant/menu-items/$id'));
 
   Map<String, dynamic> _dish(String name, double price, String? description) => {
@@ -68,4 +80,12 @@ final ownerOrdersProvider = FutureProvider.autoDispose<List<Order>>((ref) {
 final ownerRestaurantsProvider = FutureProvider.autoDispose<List<Restaurant>>((ref) {
   ref.watch(currentUserProvider.select((user) => user?.id));
   return ref.watch(restaurantOwnerRepositoryProvider).restaurants();
+});
+
+/// Periodo elegido en Finanzas, en días.
+final financeDaysProvider = StateProvider<int>((ref) => 30);
+
+final financeReportProvider = FutureProvider.autoDispose<FinanceReport>((ref) {
+  ref.watch(currentUserProvider.select((user) => user?.id));
+  return ref.watch(restaurantOwnerRepositoryProvider).finances(ref.watch(financeDaysProvider));
 });

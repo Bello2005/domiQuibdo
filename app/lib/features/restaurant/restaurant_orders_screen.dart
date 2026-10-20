@@ -8,6 +8,7 @@ import '../../core/widgets/common.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/glass.dart';
 import '../orders/order_widgets.dart';
+import 'restaurant_finance_screen.dart';
 import 'restaurant_repository.dart';
 
 /// Pedidos que le llegan al restaurante: confirmar, preparar y entregar al repartidor.
@@ -145,6 +146,12 @@ class _OwnerOrderCardState extends ConsumerState<_OwnerOrderCard> {
             Row(
               children: [
                 Expanded(child: Text('Total ${formatCop(order.total)} · ${order.paymentLabel}', style: theme.textTheme.titleSmall)),
+                if (order.status == OrderStatus.entregado)
+                  TextButton.icon(
+                    onPressed: () => downloadReceipt(context, ref, order.id),
+                    icon: const Icon(Icons.download_rounded, size: 18),
+                    label: const Text('Comprobante'),
+                  ),
               ],
             ),
             if (order.isOnlinePayment && order.paymentStatus != null) ...[

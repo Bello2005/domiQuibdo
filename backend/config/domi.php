@@ -24,4 +24,13 @@ return [
     */
     'routing_url' => env('ROUTING_URL', 'https://router.project-osrm.org'),
 
+    /*
+    | Comisión de DomiQuibdó sobre la venta de comida (sin el domicilio, que es del repartidor).
+    | Con ella se calcula la ganancia neta del restaurante en Finanzas y en los comprobantes.
+    */
+    'commission_rate' => (float) env('PLATFORM_COMMISSION_RATE', 0.10),
+
+    /* Zona horaria del negocio: los reportes agrupan ventas por día y hora local. */
+    'business_timezone' => env('BUSINESS_TIMEZONE', 'America/Bogota'),
+
 ];

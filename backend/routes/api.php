@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\IncidentController;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\Restaurant\FinanceController as OwnerFinanceController;
 use App\Http\Controllers\Api\Restaurant\MenuItemController as OwnerMenuItemController;
 use App\Http\Controllers\Api\Restaurant\OrderController as OwnerOrderController;
 use App\Http\Controllers\Api\Restaurant\RestaurantController as OwnerRestaurantController;
@@ -72,6 +73,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('orders', [OwnerOrderController::class, 'index']);
         Route::post('orders/{order}/advance', [OwnerOrderController::class, 'advance']);
         Route::post('orders/{order}/cancel', [OwnerOrderController::class, 'cancel']);
+        Route::get('orders/{order}/receipt', [OwnerFinanceController::class, 'receipt']);
+
+        Route::get('finances', [OwnerFinanceController::class, 'index']);
     });
 
     Route::prefix('admin')->middleware('admin')->group(function () {

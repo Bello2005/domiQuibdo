@@ -61,6 +61,7 @@ class RestaurantShell extends StatelessWidget {
         shell: shell,
         items: const [
           GlassNavItem(icon: Icons.receipt_long_outlined, selectedIcon: Icons.receipt_long, label: 'Pedidos'),
+          GlassNavItem(icon: Icons.insights_outlined, selectedIcon: Icons.insights, label: 'Finanzas'),
           GlassNavItem(icon: Icons.storefront_outlined, selectedIcon: Icons.storefront, label: 'Mi negocio'),
           GlassNavItem(icon: Icons.person_outline, selectedIcon: Icons.person, label: 'Perfil'),
         ],
