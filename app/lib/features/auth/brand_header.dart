@@ -83,38 +83,17 @@ class _LogoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    width: 60,
-    height: 60,
+    width: 64,
+    height: 64,
+    // Borde de vidrio para que el logo (también verde) se despegue del fondo.
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFF4A15D), AppColors.borojo, Color(0xFFC25E1C)],
-      ),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.45)),
-      boxShadow: const [BoxShadow(color: Color(0x66E07A2E), blurRadius: 22, offset: Offset(0, 10))],
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.55), width: 1.5),
+      boxShadow: const [BoxShadow(color: Color(0x55000000), blurRadius: 22, offset: Offset(0, 10))],
     ),
-    child: Stack(
-      children: [
-        Positioned(
-          left: 4,
-          right: 4,
-          top: 3,
-          height: 24,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.white.withValues(alpha: 0.30), Colors.white.withValues(alpha: 0)],
-              ),
-            ),
-          ),
-        ),
-        const Center(child: Icon(Icons.delivery_dining_rounded, color: Colors.white, size: 32)),
-      ],
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16.5),
+      child: Image.asset('assets/branding/logo.png', fit: BoxFit.cover),
     ),
   );
 }

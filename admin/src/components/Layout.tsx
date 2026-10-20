@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, MapPin, ShieldAlert, Truck, Users as UsersIcon, UtensilsCrossed } from 'lucide-react'
+import { LayoutDashboard, LogOut, MapPin, ShieldAlert, Users as UsersIcon, UtensilsCrossed } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -18,9 +18,7 @@ export function Layout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="flex w-64 shrink-0 flex-col bg-gradient-to-b from-teal-800 to-teal-950 text-white">
         <div className="flex items-center gap-3 px-6 py-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 shadow-lg">
-            <Truck size={20} />
-          </div>
+          <img src="/logo.png" alt="" className="h-10 w-10 rounded-xl shadow-lg" />
           <div>
             <p className="text-lg font-bold leading-tight">DomiQuibdó</p>
             <p className="text-xs text-teal-200">Panel de administración</p>
