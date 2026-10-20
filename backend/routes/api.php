@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Restaurant\MenuItemController as OwnerMenuItemContr
 use App\Http\Controllers\Api\Restaurant\OrderController as OwnerOrderController;
 use App\Http\Controllers\Api\Restaurant\RestaurantController as OwnerRestaurantController;
 use App\Http\Controllers\Api\RestaurantController;
+use App\Http\Controllers\Api\RestaurantPhotoController;
 use App\Http\Controllers\Api\ZoneController;
 use Illuminate\Support\Facades\Route;
 
@@ -70,6 +71,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('menu-items/{menuItem}', [OwnerMenuItemController::class, 'update']);
         Route::delete('menu-items/{menuItem}', [OwnerMenuItemController::class, 'destroy']);
 
+        Route::post('restaurants/{restaurant}/photos', [RestaurantPhotoController::class, 'store']);
+        Route::put('restaurants/{restaurant}/photos/order', [RestaurantPhotoController::class, 'reorder']);
+        Route::delete('photos/{photo}', [RestaurantPhotoController::class, 'destroy']);
+        Route::post('menu-items/{menuItem}/photo', [RestaurantPhotoController::class, 'storeMenuItemPhoto']);
+        Route::delete('menu-items/{menuItem}/photo', [RestaurantPhotoController::class, 'destroyMenuItemPhoto']);
+
         Route::get('orders', [OwnerOrderController::class, 'index']);
         Route::post('orders/{order}/advance', [OwnerOrderController::class, 'advance']);
         Route::post('orders/{order}/cancel', [OwnerOrderController::class, 'cancel']);
@@ -98,6 +105,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('restaurants/{restaurant}/menu-items', [AdminMenuItemController::class, 'store']);
         Route::put('menu-items/{menuItem}', [AdminMenuItemController::class, 'update']);
         Route::delete('menu-items/{menuItem}', [AdminMenuItemController::class, 'destroy']);
+
+        Route::post('restaurants/{restaurant}/photos', [RestaurantPhotoController::class, 'store']);
+        Route::put('restaurants/{restaurant}/photos/order', [RestaurantPhotoController::class, 'reorder']);
+        Route::delete('photos/{photo}', [RestaurantPhotoController::class, 'destroy']);
+        Route::post('menu-items/{menuItem}/photo', [RestaurantPhotoController::class, 'storeMenuItemPhoto']);
+        Route::delete('menu-items/{menuItem}/photo', [RestaurantPhotoController::class, 'destroyMenuItemPhoto']);
 
         Route::get('users', [AdminUserController::class, 'index']);
         Route::post('users', [AdminUserController::class, 'store']);

@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Photos Disk
+    |--------------------------------------------------------------------------
+    |
+    | Disco donde se guardan las fotos que suben los restaurantes (galería y
+    | platos). "public" las deja en este servidor; apúntalo a un disco S3/R2
+    | para usar un bucket.
+    |
+    */
+
+    'photos_disk' => env('PHOTOS_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

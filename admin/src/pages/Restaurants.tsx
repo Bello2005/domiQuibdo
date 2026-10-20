@@ -1,6 +1,7 @@
 import { AlertCircle, ChevronDown, Loader2, Pencil, Phone, Plus, Star, Trash2 } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { FormField, Modal, inputClass } from '../components/Modal'
+import { MenuItemPhoto, RestaurantPhotos } from '../components/RestaurantPhotos'
 import { api, apiErrorMessage, type MenuItem, type Restaurant } from '../lib/api'
 
 const currency = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })
@@ -13,7 +14,6 @@ type RestaurantForm = {
   longitude: string
   address_text: string
   phone: string
-  cover_image_url: string
   rating_avg: string
   delivery_time_min: string
   is_active: boolean
@@ -27,7 +27,6 @@ const emptyRestaurantForm: RestaurantForm = {
   longitude: '',
   address_text: '',
   phone: '',
-  cover_image_url: '',
   rating_avg: '',
   delivery_time_min: '',
   is_active: true,
@@ -37,11 +36,10 @@ type MenuItemForm = {
   name: string
   description: string
   price: string
-  image_url: string
   is_available: boolean
 }
 
-const emptyMenuItemForm: MenuItemForm = { name: '', description: '', price: '', image_url: '', is_available: true }
+const emptyMenuItemForm: MenuItemForm = { name: '', description: '', price: '', is_available: true }
 
 export function Restaurants() {
   const [restaurants, setRestaurants] = useState<Restaurant[] | null>(null)
@@ -88,7 +86,6 @@ export function Restaurants() {
       longitude: String(r.longitude),
       address_text: r.address_text,
       phone: r.phone ?? '',
-      cover_image_url: r.cover_image_url ?? '',
       rating_avg: r.rating_avg != null ? String(r.rating_avg) : '',
       delivery_time_min: r.delivery_time_min != null ? String(r.delivery_time_min) : '',
       is_active: r.is_active,
@@ -109,7 +106,6 @@ export function Restaurants() {
       longitude: Number(restaurantForm.longitude),
       address_text: restaurantForm.address_text,
       phone: restaurantForm.phone || null,
-      cover_image_url: restaurantForm.cover_image_url || null,
       rating_avg: restaurantForm.rating_avg ? Number(restaurantForm.rating_avg) : null,
       delivery_time_min: restaurantForm.delivery_time_min ? Number(restaurantForm.delivery_time_min) : null,
       is_active: restaurantForm.is_active,
@@ -152,7 +148,6 @@ export function Restaurants() {
       name: item.name,
       description: item.description ?? '',
       price: String(item.price),
-      image_url: item.image_url ?? '',
       is_available: item.is_available,
     })
     setItemFormError(null)
@@ -168,7 +163,6 @@ export function Restaurants() {
       name: itemForm.name,
       description: itemForm.description || null,
       price: Number(itemForm.price),
-      image_url: itemForm.image_url || null,
       is_available: itemForm.is_available,
     }
     try {
@@ -233,6 +227,9 @@ export function Restaurants() {
           const isOpen = expanded === restaurant.id
           return (
             <div key={restaurant.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              {restaurant.cover_thumb_url && (
+                <img src={restaurant.cover_thumb_url} alt="" className="h-32 w-full object-cover" loading="lazy" />
+              )}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <button onClick={() => toggle(restaurant.id)} className="min-w-0 flex-1 text-left">
@@ -278,6 +275,7 @@ export function Restaurants() {
 
               {isOpen && (
                 <div className="border-t border-slate-100 bg-slate-50 p-4">
+                  <RestaurantPhotos restaurant={restaurant} onChange={load} />
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Menú</p>
                     <button
@@ -295,7 +293,8 @@ export function Restaurants() {
                     <ul className="space-y-1">
                       {restaurant.menu_items.map((item) => (
                         <li key={item.id} className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm shadow-sm">
-                          <div className="min-w-0">
+                          <MenuItemPhoto item={item} onChange={load} />
+                          <div className="min-w-0 flex-1">
                             <span className={`truncate ${item.is_available ? 'text-slate-700' : 'text-slate-400 line-through'}`}>
                               {item.name}
                             </span>
@@ -346,9 +345,6 @@ export function Restaurants() {
             <FormField label="Teléfono">
               <input className={inputClass} value={restaurantForm.phone} onChange={(e) => setRestaurantForm({ ...restaurantForm, phone: e.target.value })} />
             </FormField>
-            <FormField label="URL de portada">
-              <input type="url" className={inputClass} value={restaurantForm.cover_image_url} onChange={(e) => setRestaurantForm({ ...restaurantForm, cover_image_url: e.target.value })} />
-            </FormField>
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Calificación (0-5)">
                 <input type="number" step="0.1" min="0" max="5" className={inputClass} value={restaurantForm.rating_avg} onChange={(e) => setRestaurantForm({ ...restaurantForm, rating_avg: e.target.value })} />
@@ -387,9 +383,6 @@ export function Restaurants() {
             </FormField>
             <FormField label="Precio (COP)">
               <input required type="number" min="0" className={inputClass} value={itemForm.price} onChange={(e) => setItemForm({ ...itemForm, price: e.target.value })} />
-            </FormField>
-            <FormField label="URL de imagen">
-              <input type="url" className={inputClass} value={itemForm.image_url} onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })} />
             </FormField>
             <label className="flex items-center gap-2 text-sm text-slate-700">
               <input type="checkbox" checked={itemForm.is_available} onChange={(e) => setItemForm({ ...itemForm, is_available: e.target.checked })} />

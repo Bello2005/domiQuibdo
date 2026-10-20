@@ -175,7 +175,7 @@ class _PhotoViewerState extends State<_PhotoViewer> {
           maxScale: 4,
           child: Center(
             child: Image(
-              image: url.startsWith('assets/') ? AssetImage(url) : NetworkImage(url) as ImageProvider,
+              image: GeneratedCover.imageProvider(url),
               fit: BoxFit.contain,
               errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined, color: Colors.white54, size: 48),
             ),

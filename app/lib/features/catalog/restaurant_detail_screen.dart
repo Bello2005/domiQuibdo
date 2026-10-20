@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/format.dart';
 import '../../core/models.dart';
 import '../../core/widgets/common.dart';
-import '../../core/demo_covers.dart';
 import '../../core/widgets/generated_cover.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/glass.dart';
@@ -38,6 +37,11 @@ class RestaurantDetailScreen extends ConsumerWidget {
             expandedHeight: 300,
             backgroundColor: CategoryStyle.of(category).colors.first,
             foregroundColor: Colors.white,
+            // El tema pone el título oscuro; sobre la foto va blanco con sombra para que se lea.
+            titleTextStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              shadows: const [Shadow(color: Color(0x99000000), blurRadius: 8)],
+            ),
             title: Text(restaurant?.name ?? ''),
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
@@ -45,8 +49,8 @@ class RestaurantDetailScreen extends ConsumerWidget {
                 child: CoverGallery(
                   category: category,
                   seed: id,
-                  images: switch (DemoCovers.gallery(id)) {
-                    final local when local.isNotEmpty => local,
+                  images: switch (restaurant) {
+                    Restaurant(:final photos) when photos.isNotEmpty => [for (final photo in photos) photo.url],
                     _ => [?restaurant?.coverImageUrl],
                   },
                 ),
@@ -190,7 +194,7 @@ class DishTile extends ConsumerWidget {
                 category: restaurant.category,
                 iconSize: 24,
                 seed: dish.id,
-                imageUrl: DemoCovers.dish(restaurant.id, dish.name) ?? dish.imageUrl,
+                imageUrl: dish.imageThumbUrl ?? dish.imageUrl,
                 borderRadius: BorderRadius.circular(16),
               ),
             ),

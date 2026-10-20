@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 import '../theme.dart';
 
 /// Portada generada por categoría (degradado + ícono). Si el negocio tiene foto
@@ -46,6 +48,10 @@ class GeneratedCover extends StatelessWidget {
   /// URL de la foto, o ruta de un asset local (`assets/...`).
   final String? imageUrl;
 
+  /// Foto de red con caché en disco (no se vuelve a descargar), o asset local.
+  static ImageProvider imageProvider(String url) =>
+      url.startsWith('assets/') ? AssetImage(url) : CachedNetworkImageProvider(url);
+
   @override
   Widget build(BuildContext context) {
     final generated = _generated();
@@ -61,7 +67,7 @@ class GeneratedCover extends StatelessWidget {
           children: [
             generated,
             Image(
-              image: url.startsWith('assets/') ? AssetImage(url) : NetworkImage(url) as ImageProvider,
+              image: imageProvider(url),
               fit: BoxFit.cover,
               frameBuilder: (context, child, frame, wasSynchronouslyLoaded) => AnimatedOpacity(
                 opacity: frame == null && !wasSynchronouslyLoaded ? 0 : 1,

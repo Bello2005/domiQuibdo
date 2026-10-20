@@ -13,7 +13,7 @@ class RestaurantController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $restaurants = Restaurant::where('is_active', true)
+        $restaurants = Restaurant::with('photos')->where('is_active', true)
             ->when($request->filled('category'), fn ($q) => $q->where('category', $request->string('category')))
             ->when($request->filled('q'), fn ($q) => $q->where('name', 'ilike', '%'.$request->string('q').'%'))
             ->orderByDesc('rating_avg')
@@ -34,7 +34,7 @@ class RestaurantController extends Controller
         abort_unless($restaurant->is_active, 404);
 
         return RestaurantResource::make(
-            $restaurant->load(['menuItems' => fn ($q) => $q->where('is_available', true)->orderBy('id')])
+            $restaurant->load(['photos', 'menuItems' => fn ($q) => $q->where('is_available', true)->orderBy('id')])
         );
     }
 }

@@ -13,4 +13,10 @@ class RestaurantPolicy
     {
         return $user->hasRole(UserRole::Restaurante) && $restaurant->user_id === $user->id;
     }
+
+    /** Las fotos las gestiona el dueño del negocio o un administrador. */
+    public function managePhotos(User $user, Restaurant $restaurant): bool
+    {
+        return $user->hasRole(UserRole::Admin) || $this->update($user, $restaurant);
+    }
 }

@@ -35,4 +35,10 @@ class Restaurant extends Model
     {
         return $this->hasMany(MenuItem::class);
     }
+
+    /** @return HasMany<RestaurantPhoto, $this> */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(RestaurantPhoto::class)->orderBy('position')->orderBy('id');
+    }
 }

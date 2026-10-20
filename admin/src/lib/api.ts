@@ -67,7 +67,15 @@ export interface MenuItem {
   description: string | null
   price: number
   image_url: string | null
+  image_thumb_url: string | null
   is_available: boolean
+}
+
+export interface RestaurantPhoto {
+  id: number
+  url: string
+  thumb_url: string
+  position: number
 }
 
 export interface Restaurant {
@@ -80,6 +88,8 @@ export interface Restaurant {
   address_text: string
   phone: string | null
   cover_image_url: string | null
+  cover_thumb_url: string | null
+  photos?: RestaurantPhoto[]
   rating_avg: number | null
   delivery_time_min: number | null
   is_active: boolean

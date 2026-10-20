@@ -115,6 +115,7 @@ class Dish {
     required this.price,
     this.description,
     this.imageUrl,
+    this.imageThumbUrl,
     this.isAvailable = true,
   });
 
@@ -124,6 +125,7 @@ class Dish {
         name: json['name'] as String,
         description: json['description'] as String?,
         imageUrl: json['image_url'] as String?,
+        imageThumbUrl: json['image_thumb_url'] as String?,
         price: _toDouble(json['price']),
         isAvailable: json['is_available'] as bool? ?? true,
       );
@@ -133,8 +135,25 @@ class Dish {
   final String name;
   final String? description;
   final String? imageUrl;
+
+  /// Miniatura para listas; cae en la foto grande si el backend no la manda.
+  final String? imageThumbUrl;
   final double price;
   final bool isAvailable;
+}
+
+class RestaurantPhoto {
+  const RestaurantPhoto({required this.id, required this.url, required this.thumbUrl});
+
+  factory RestaurantPhoto.fromJson(Map<String, dynamic> json) => RestaurantPhoto(
+        id: json['id'] as int,
+        url: json['url'] as String,
+        thumbUrl: json['thumb_url'] as String,
+      );
+
+  final int id;
+  final String url;
+  final String thumbUrl;
 }
 
 class Restaurant {
@@ -149,6 +168,8 @@ class Restaurant {
     this.description,
     this.phone,
     this.coverImageUrl,
+    this.coverThumbUrl,
+    this.photos = const [],
     this.isActive = true,
     this.menu = const [],
   });
@@ -162,6 +183,11 @@ class Restaurant {
         addressText: json['address_text'] as String,
         phone: json['phone'] as String?,
         coverImageUrl: json['cover_image_url'] as String?,
+        coverThumbUrl: json['cover_thumb_url'] as String?,
+        photos: [
+          for (final photo in (json['photos'] as List<dynamic>? ?? const []))
+            RestaurantPhoto.fromJson(photo as Map<String, dynamic>),
+        ],
         rating: _toDouble(json['rating_avg']),
         deliveryTimeMin: json['delivery_time_min'] as int,
         isActive: json['is_active'] as bool? ?? true,
@@ -179,6 +205,10 @@ class Restaurant {
   final String addressText;
   final String? phone;
   final String? coverImageUrl;
+  final String? coverThumbUrl;
+
+  /// Galería subida por el restaurante; la primera es la portada.
+  final List<RestaurantPhoto> photos;
   final double rating;
   final int deliveryTimeMin;
   final bool isActive;

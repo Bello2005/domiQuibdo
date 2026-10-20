@@ -14,7 +14,7 @@ class RestaurantController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         return RestaurantResource::collection(
-            $request->user()->restaurants()->with('menuItems')->orderBy('name')->get()
+            $request->user()->restaurants()->with(['menuItems', 'photos'])->orderBy('name')->get()
         );
     }
 
@@ -29,6 +29,6 @@ class RestaurantController extends Controller
         ]);
         $restaurant->update($data);
 
-        return RestaurantResource::make($restaurant->load('menuItems'));
+        return RestaurantResource::make($restaurant->load(['menuItems', 'photos']));
     }
 }

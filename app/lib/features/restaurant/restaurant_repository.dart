@@ -55,6 +55,29 @@ class RestaurantOwnerRepository {
         return OrderReceipt.fromJson(response.data!);
       });
 
+  /// Sube una foto a la galería del negocio (el backend la redimensiona).
+  Future<void> addPhoto(int restaurantId, String filePath) => guardApi(
+        () async => _dio.post<void>(
+          'restaurant/restaurants/$restaurantId/photos',
+          data: FormData.fromMap({'photo': await MultipartFile.fromFile(filePath)}),
+        ),
+      );
+
+  Future<void> deletePhoto(int photoId) => guardApi(() => _dio.delete<void>('restaurant/photos/$photoId'));
+
+  /// Guarda el orden de la galería; la primera foto queda como portada.
+  Future<void> reorderPhotos(int restaurantId, List<int> photoIds) =>
+      guardApi(() => _dio.put<void>('restaurant/restaurants/$restaurantId/photos/order', data: {'ids': photoIds}));
+
+  Future<void> setDishPhoto(int dishId, String filePath) => guardApi(
+        () async => _dio.post<void>(
+          'restaurant/menu-items/$dishId/photo',
+          data: FormData.fromMap({'photo': await MultipartFile.fromFile(filePath)}),
+        ),
+      );
+
+  Future<void> removeDishPhoto(int dishId) => guardApi(() => _dio.delete<void>('restaurant/menu-items/$dishId/photo'));
+
   Future<void> deleteDish(int id) => guardApi(() => _dio.delete<void>('restaurant/menu-items/$id'));
 
   Map<String, dynamic> _dish(String name, double price, String? description) => {
